@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="WG Vorrat">
+<meta name="theme-color" content="#2747E8">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<title>WG Vorrat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: one-screen phone app — sticky header, tab content, bottom tab bar. Tiles = big tap targets. */
+:root{
+  --bg:#EEF2EE; --surface:#FFFFFF; --surface-2:#E3E9E4; --ink:#16201C; --muted:#5D6B64; --line:#D3DCD6;
+  --accent:#2747E8; --accent-ink:#FFFFFF;
+  --ok:#1E9E5A; --ok-bg:#DDF3E6; --low:#C98A00; --low-bg:#FFF1C9; --empty:#D93A2B; --empty-bg:#FFE0DB;
+  --shadow:0 1px 2px rgba(22,32,28,.06),0 4px 14px rgba(22,32,28,.06);
+  --f-display:"Bricolage Grotesque",ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101513; --surface:#19201D; --surface-2:#222B27; --ink:#E9F0EC; --muted:#93A39B; --line:#2C3631;
+  --accent:#7D93FF; --accent-ink:#0B1030;
+  --ok:#4CD38A; --ok-bg:#16301F; --low:#F2C14E; --low-bg:#352B0F; --empty:#FF7A6B; --empty-bg:#3A1A16;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101513; --surface:#19201D; --surface-2:#222B27; --ink:#E9F0EC; --muted:#93A39B; --line:#2C3631;
+  --accent:#7D93FF; --accent-ink:#0B1030;
+  --ok:#4CD38A; --ok-bg:#16301F; --low:#F2C14E; --low-bg:#352B0F; --empty:#FF7A6B; --empty-bg:#3A1A16;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font:500 15px/1.45 var(--f-body);-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:0 110px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:14px 10px;display:flex;align-items:center;gap:10px}
+.brand{flex:1;min-width:0}
+.brand h1{margin:0;font:800 26px/1 var(--f-display);letter-spacing:-.02em}
+.brand p{margin:3px 0 0;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{width:42px;height:42px;border-radius:12px;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px}
+.mechip{height:42px;padding:0 12px 0 6px;border-radius:21px;background:var(--surface);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;font-weight:700}
+.avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:800 14px var(--f-display);color:#fff;flex:none}
+
+.summary{display:flex;gap:8px;margin:4px 0 14px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.low{background:var(--low-bg);color:var(--low)} .pill.empty{background:var(--empty-bg);color:var(--empty)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+
+.mood{font:600 15px/1.35 var(--f-display);margin:0 0 14px;color:var(--muted)}
+.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.cats button{flex:none;padding:8px 14px;border-radius:999px;background:var(--surface-2);font-weight:600;font-size:14px}
+.cats button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+.section-h{font:800 13px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:18px 2px 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.tile{position:relative;aspect-ratio:1/1;max-width:100%;border-radius:20px;background:var(--surface);box-shadow:var(--shadow);border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;text-align:center;transition:transform .15s}
+.tile .em{font-size:36px;line-height:1}
+.tile .nm{font-weight:700;font-size:13.5px;line-height:1.15;word-break:break-word;hyphens:auto}
+.tile .st{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.tile.full .st{color:var(--ok)}
+.tile.low{background:var(--low-bg);border-color:var(--low)} .tile.low .st{color:var(--low)}
+.tile.empty{background:var(--empty-bg);border-color:var(--empty)} .tile.empty .st{color:var(--empty)}
+.tile.empty{animation:wobble 2.6s ease-in-out infinite}
+.tile.bump{animation:bump .35s ease}
+.tile .edit{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:8px;background:var(--surface-2);font-size:13px;display:grid;place-items:center}
+.add-tile{border:2px dashed var(--line);background:transparent;box-shadow:none;color:var(--muted)}
+@keyframes wobble{0%,86%,100%{transform:rotate(0)}89%{transform:rotate(-4deg)}92%{transform:rotate(4deg)}95%{transform:rotate(-2deg)}}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(.9)}75%{transform:scale(1.06)}100%{transform:scale(1)}}
+.hint{color:var(--muted);font-size:13px;margin:12px 2px 0}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:16px;padding:12px 12px 12px 14px;box-shadow:var(--shadow)}
+.row .em{font-size:28px;flex:none}
+.row .tx{flex:1;min-width:0}
+.row .tx b{display:block;font-size:15px}
+.row .tx span{color:var(--muted);font-size:13px}
+.row .stbar{width:6px;align-self:stretch;border-radius:3px;flex:none}
+.btn{padding:10px 16px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font-weight:700;white-space:nowrap}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.btn.danger{background:var(--empty-bg);color:var(--empty)}
+.btn.wide{width:100%;padding:14px}
+.empty-state{text-align:center;padding:40px 16px;color:var(--muted)}
+.empty-state .big{font-size:52px}
+.empty-state h3{font:800 20px var(--f-display);color:var(--ink);margin:8px 0 4px}
+
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
+.person{background:var(--surface);border-radius:18px;padding:14px 8px 12px;text-align:center;box-shadow:var(--shadow);position:relative;min-width:0}
+.person .avatar{width:44px;height:44px;font-size:19px;margin:0 auto 6px}
+.person .crown{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:22px}
+.person b{display:block;font-size:15px}
+.person .num{font:800 22px var(--f-display);font-variant-numeric:tabular-nums}
+.person small{display:block;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.person .title{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--surface-2)}
+.money{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.card{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow)}
+.balance{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.balance div{display:flex;justify-content:space-between;gap:10px}
+.pos{color:var(--ok)} .neg{color:var(--empty)}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+nav.tabs .in{display:flex;gap:4px;width:100%;max-width:520px}
+nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:12px;font-size:12px;font-weight:700;color:var(--muted);position:relative}
+nav.tabs button .ic{font-size:22px}
+nav.tabs button[aria-selected="true"]{color:var(--ink);background:var(--surface-2)}
+.badge{position:absolute;top:2px;right:calc(50% - 26px);min-width:18px;height:18px;border-radius:9px;background:var(--empty);color:#fff;font-size:11px;display:grid;place-items:center;padding:0 5px}
+
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(10,14,12,.5);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet{width:100%;max-width:440px;background:var(--surface);border-radius:24px;padding:22px 20px 20px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:up .25s ease;max-height:90%;overflow:auto}
+@media (min-width:600px){.scrim{align-items:center}}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h2{margin:0 0 4px;font:800 24px/1.1 var(--f-display);text-wrap:balance}
+.sheet p.sub{margin:0 0 16px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select{font:600 16px var(--f-body);padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+.field-row{display:grid;grid-template-columns:90px 1fr;gap:10px}
+.actions{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.actions .btn{flex:1}
+.names{display:grid;gap:10px;margin-top:6px}
+.names button{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:var(--surface-2);font:800 19px var(--f-display);text-align:left}
+.names .avatar{width:42px;height:42px;font-size:18px}
+.alertlist{display:flex;flex-direction:column;gap:8px;margin:0 0 16px}
+.alertlist div{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px}
+.alertlist .low{background:var(--low-bg)} .alertlist .empty{background:var(--empty-bg)}
+.alertlist .em{font-size:26px}
+.alertlist small{display:block;color:var(--muted)}
+.siren{font-size:46px;display:block;animation:siren .6s ease-in-out infinite alternate}
+@keyframes siren{from{transform:rotate(-10deg) scale(1)}to{transform:rotate(10deg) scale(1.1)}}
+
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:16px;font-weight:700;max-width:calc(100% - 32px);width:max-content;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:drop .3s ease}
+@keyframes drop{from{transform:translate(-50%,-20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.notice{background:var(--low-bg);color:var(--ink);border-radius:14px;padding:10px 14px;font-size:13px;margin-bottom:12px}
+canvas#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:70}
+.statuspick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.statuspick button{padding:12px 6px;border-radius:14px;font-weight:700;font-size:13px;border:2px solid transparent}
+.statuspick .s-full{background:var(--ok-bg);color:var(--ok)} .statuspick .s-low{background:var(--low-bg);color:var(--low)} .statuspick .s-empty{background:var(--empty-bg);color:var(--empty)}
+.statuspick button[aria-pressed="true"]{border-color:currentColor}
+.emoji-btn{width:100%;font-size:26px;padding:7px 0;border-radius:12px;border:2px solid var(--line);background:var(--bg)}
+.emoji-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:4px;max-height:210px;overflow-y:auto;padding:8px;border-radius:14px;background:var(--surface-2);margin:-4px 0 12px}
+.emoji-grid button{font-size:24px;height:44px;border-radius:10px}
+.emoji-grid button[aria-pressed="true"]{background:var(--surface);box-shadow:0 0 0 2px var(--accent)}
+.emoji-grid .own{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);padding:4px 2px 0}
+.emoji-grid .own input{width:64px;font-size:22px;text-align:center;padding:6px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.chat{display:flex;flex-direction:column;gap:6px;padding-bottom:84px}
+.msg{max-width:82%;padding:8px 12px 6px;border-radius:16px;border-top-left-radius:4px;align-self:flex-start;background:var(--surface);box-shadow:var(--shadow);border-left:4px solid var(--c);min-width:0}
+.msg.mine{align-self:flex-end;border-left:0;border-right:4px solid var(--c);border-top-left-radius:16px;border-top-right-radius:4px}
+.msg .who{font-weight:800;font-size:12.5px;color:var(--c)}
+.msg .txt{white-space:pre-wrap;word-break:break-word;font-size:15px}
+.msg .time{font-size:11px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;margin-top:2px}
+.daysep{align-self:center;font-size:12px;font-weight:700;color:var(--muted);background:var(--surface-2);padding:3px 10px;border-radius:999px;margin:8px 0 2px}
+.chatbar{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:25;background:var(--bg);padding:8px 16px;display:flex;justify-content:center}
+.chatbar form{display:flex;gap:8px;width:100%;max-width:688px}
+.chatbar textarea{flex:1;min-width:0;resize:none;font:500 16px/1.35 var(--f-body);padding:10px 14px;border-radius:20px;border:2px solid var(--line);background:var(--surface);color:var(--ink);max-height:110px}
+.chatbar button{width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:20px;flex:none;align-self:flex-end}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>WG Vorrat</h1><p id="sub">Leon · Lucio · Yannick</p></div>
+    <button class="iconbtn" id="soundBtn" aria-label="Ton an/aus">🔊</button>
+    <button class="mechip" id="meBtn" aria-label="Person wechseln"></button>
+  </header>
+  <div id="notice"></div>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" role="tablist"><div class="in">
+  <button role="tab" data-tab="vorrat" aria-selected="true"><span class="ic">🏠</span>Vorrat</button>
+  <button role="tab" data-tab="liste" aria-selected="false"><span class="ic">🛒</span>Einkaufsliste<span class="badge" id="listBadge" hidden></span></button>
+  <button role="tab" data-tab="geld" aria-selected="false"><span class="ic">💶</span>Ausgaben</button>
+  <button role="tab" data-tab="chat" aria-selected="false"><span class="ic">💬</span>Chat<span class="badge" id="chatBadge" hidden></span></button>
+</div></nav>
+<div id="modal"></div>
+<canvas id="confetti" hidden></canvas>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===================== EINSTELLUNGEN =====================
+   1) Hier die Firebase-Konfiguration einfügen (aus der Firebase-Konsole kopieren).
+   2) WG_ID und NTFY_TOPIC NICHT ändern – die stehen auch in der Anleitung.     */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyATpgnMaIGlMhmJVfZSnOWwQENa7yIg21M",
+  authDomain: "wg-vorrat.firebaseapp.com",
+  projectId: "wg-vorrat",
+  storageBucket: "wg-vorrat.firebasestorage.app",
+  messagingSenderId: "1032028316979",
+  appId: "1:1032028316979:web:ef5c6b793304da96e04a46"
+};
+const WG_ID = "wg-df6970f8e70a3ab3";
+const NTFY_TOPIC = "wgvorrat-c54d95de25513d322851";
+/* ========================================================= */
+</script>
+<script>
+const PEOPLE = ["Leon","Lucio","Yannick"];
+const COLORS = {Leon:"#2747E8",Lucio:"#E0582E",Yannick:"#14946A"};
+const CATS = ["Küche","Bad","Putzen","Sonstiges"];
+const STARTER = [
+  ["Öl","🫒","Küche"],["Salz","🧂","Küche"],["Pfeffer","🌶️","Küche"],["Zucker","🍬","Küche"],["Mehl","🌾","Küche"],
+  ["Klopapier","🧻","Bad"],["Handseife","🧼","Bad"],["Küchenrolle","🧻","Küche"],
+  ["Spülmittel","🫧","Putzen"],["Spülmaschinentabs","🍽️","Putzen"],["Müllbeutel","🗑️","Putzen"],["Waschmittel","👕","Putzen"],["Schwämme","🧽","Putzen"]
+];
+const EMOJIS = ["🧻","🧼","🧴","🪥","🧽","🫧","🧹","🪣","🗑️","🧺","👕","🧦","🪒","💊","🩹","🕯️","💡","🔋",
+"🫒","🧂","🌶️","🧄","🧅","🍬","🌾","🍝","🍚","🥫","🫙","🍯","🧈","🥚","🥛","🧀","🍞","🥐","☕","🍵","🫖","🧃","🥤","🍺","🍷","🧊",
+"🍅","🥔","🥕","🍋","🍎","🍌","🥑","🥬","🍫","🍪","🥜","🍿","🍕","🧇","🍽️","🥄","🔪","🧯","🌿","🪴","🐱","📦"];
+const ST_LABEL = {full:"Voll",low:"Fast leer",empty:"Leer"};
+const NEXT = {full:"low",low:"empty",empty:"full"};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls = {get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const eur = n => (n||0).toLocaleString("de-DE",{style:"currency",currency:"EUR"});
+function ago(ms){const s=(Date.now()-ms)/1000; if(s<60)return "gerade eben"; if(s<3600)return `vor ${Math.round(s/60)} Min.`; if(s<86400)return `vor ${Math.round(s/3600)} Std.`; const d=Math.round(s/86400); return d===1?"gestern":`vor ${d} Tagen`;}
+function fdate(ms){return new Date(ms).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}
+const avatar = (n,cls="") => `<span class="avatar ${cls}" style="background:${COLORS[n]||"#888"}">${esc((n||"?")[0])}</span>`;
+
+/* ---------- Funny copy ---------- */
+const SPECIAL = {
+  Klopapier:{low:["Klopapier wird knapp. Bitte sparsam abrollen.","Noch 2 Rollen. Die Uhr tickt."]},
+  "Öl":{low:["Das Öl geht zur Neige. Die Pfanne macht sich Sorgen."]},
+  "Spülmittel":{low:["Spülmittel fast leer. Noch ein bis zwei Abwasch-Abenteuer."]},
+};
+const CR7 = "Nur noch so viel übrig, wie CR7 WM-Titel hat";
+const GENERIC = {
+  empty:["{x}: "+CR7+" 🏆❌"],
+  low:["{x} wird knapp. Kleiner Reminder.","{x} fast leer. Noch ist Zeit."]
+};
+const HERO = ["Held des Tages: {n} 🦸","{n} hat die WG gerettet. Applaus!","Ehre, wem Ehre gebührt: {n} 🏆","{n} for President 🗳️"];
+function quip(name,status){const s=SPECIAL[name]?.[status]; return pick(s||GENERIC[status]).replace("{x}",name)}
+function mood(items){
+  const e=items.filter(i=>i.status==="empty").length, l=items.filter(i=>i.status==="low").length;
+  if(!items.length) return "";
+  if(!e&&!l) return pick(["Die WG ist bestens versorgt. Ihr seid Legenden. ✨","Alles grün. So sieht Erwachsensein aus.","Nichts fehlt. Verdächtig. Aber schön."]);
+  if(e>=4) return "Lage: kritisch. Jemand muss heute zum Supermarkt. 🫡";
+  if(e) return pick(["Ein paar Sachen sind alle. Zeit für einen Einkauf.","Es fehlt was. Wer hat den Rucksack?"]);
+  return "Ein paar Dinge werden knapp. Noch kein Grund zur Panik.";
+}
+
+/* ---------- Sounds (Web Audio, no files) ---------- */
+let actx=null; let muted = ls.get("wg_muted")==="1";
+function audio(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){} } if(actx&&actx.state==="suspended") actx.resume(); return actx; }
+document.addEventListener("pointerdown",()=>audio(),{once:true});
+function tone(f,start,dur,type="sine",vol=.18,f2){const a=audio(); if(!a||muted)return; const t=a.currentTime+start; const o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.02); g.gain.exponentialRampToValueAtTime(.001,t+dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+.05);}
+/* Ein einziger, dezenter Hinweiston für alles */
+const SFX = { ding(){ tone(880,0,.18,"sine",.12); tone(1320,.09,.25,"sine",.07); } };
+function play(n){ if(!muted) try{SFX.ding()}catch(e){} }
+
+/* ---------- Confetti ---------- */
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c=$("#confetti"); c.hidden=false; const x=c.getContext("2d"); const W=c.width=innerWidth, H=c.height=innerHeight;
+  const cols=["#2747E8","#E0582E","#14946A","#F2C14E","#FF7A6B","#7D93FF"];
+  const P=Array.from({length:140},()=>({x:W/2,y:H*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*14-4,r:Math.random()*6+4,c:pick(cols),a:Math.random()*6,s:(Math.random()-.5)*.3}));
+  let f=0; (function step(){ x.clearRect(0,0,W,H); P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.a+=p.s; x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;x.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);x.restore()}); if(++f<150) requestAnimationFrame(step); else {x.clearRect(0,0,W,H); c.hidden=true;} })();
+}
+
+/* ---------- Toast ---------- */
+let toastT; function toast(msg){ const el=document.createElement("div"); el.className="toast"; el.textContent=msg; document.querySelectorAll(".toast").forEach(t=>t.remove()); document.body.appendChild(el); clearTimeout(toastT); toastT=setTimeout(()=>el.remove(),3200); }
+
+/* ---------- Store (shared db, or local fallback) ---------- */
+const state = { items:[], purchases:[], chat:[], loaded:false, shared:false, tab:"vorrat", cat:"Alle", edit:false };
+let me = ls.get("wg_me"); if(!PEOPLE.includes(me)) me=null;
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+const Store = {
+  db:null,
+  async init(){
+    let db=null;
+    try{
+      if(window.firebase && FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("HIER")){
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const fs=firebase.firestore();
+        const root=fs.collection("wgs").doc(WG_ID);
+        db={ doc:p=>{const [c,id]=p.split("/"); return root.collection(c).doc(id)}, collection:c=>root.collection(c) };
+      }
+    }catch(e){ console.error(e); db=null; }
+    if(db){
+      this.db=db; state.shared=true;
+      db.collection("items").onSnapshot(snap=>{ onItems(snap.docs.map(d=>({id:d.id,...d.data()})), snap.docChanges()); }, e=>showNotice("Keine Verbindung zur Datenbank. Prüfe die Firestore-Regeln oder lade neu."));
+      db.collection("purchases").onSnapshot(snap=>{ state.purchases=snap.docs.map(d=>({id:d.id,...d.data()})); render(); }, ()=>{});
+      db.collection("chat").orderBy("at","desc").limit(300).onSnapshot(snap=>{ onChat(snap.docs.map(d=>({id:d.id,...d.data()})).reverse()); }, ()=>{});
+    } else {
+      showNotice("Firebase ist noch nicht eingerichtet: Änderungen werden nur auf diesem Gerät gespeichert.");
+      let saved=null; try{ saved=JSON.parse(ls.get("wg_local")||"null") }catch(e){}
+      state.purchases = saved?.purchases||[]; state.chat = saved?.chat||[]; onItems(saved?.items||[],[]);
+    }
+  },
+  saveLocal(){ ls.set("wg_local",JSON.stringify({items:state.items,purchases:state.purchases,chat:state.chat})) },
+  async setItem(id,data){
+    if(this.db){ try{ await this.db.doc("items/"+id).set(data) }catch(e){ writeErr(e) } }
+    else { const i=state.items.findIndex(x=>x.id===id); const v={id,...data}; i<0?state.items.push(v):state.items[i]=v; this.saveLocal(); onItems(state.items,[]); }
+  },
+  async delItem(id){
+    if(this.db){ try{ await this.db.doc("items/"+id).delete() }catch(e){ writeErr(e) } }
+    else { state.items=state.items.filter(x=>x.id!==id); this.saveLocal(); onItems(state.items,[]); }
+  },
+  async addPurchase(p){
+    const id=uid();
+    if(this.db){ try{ await this.db.doc("purchases/"+id).set(p) }catch(e){ writeErr(e) } }
+    else { state.purchases.push({id,...p}); this.saveLocal(); render(); }
+  },
+  async addChat(m){
+    const id=String(m.at).padStart(15,"0")+"-"+uid();
+    if(this.db){ try{ await this.db.doc("chat/"+id).set(m); return true }catch(e){ writeErr(e); return false } }
+    else { state.chat.push({id,...m}); this.saveLocal(); onChat(state.chat); return true }
+  },
+  async delPurchase(id){
+    if(this.db){ try{ await this.db.doc("purchases/"+id).delete() }catch(e){ writeErr(e) } }
+    else { state.purchases=state.purchases.filter(x=>x.id!==id); this.saveLocal(); render(); }
+  }
+};
+function writeErr(e){ console.error(e); toast(e?.code==="permission-denied" ? "Keine Schreibrechte. Prüfe die Firestore-Regeln." : "Speichern hat nicht geklappt. Bist du online?"); }
+/* Push aufs Handy über ntfy */
+function notify(title,message,tags){
+  if(!NTFY_TOPIC) return;
+  try{ fetch("https://ntfy.sh/",{method:"POST",body:JSON.stringify({topic:NTFY_TOPIC,title,message,tags:[tags],priority:tags==="rotating_light"?4:3})}).catch(()=>{}); }catch(e){}
+}
+function showNotice(t){ $("#notice").innerHTML=`<div class="notice">${esc(t)}</div>`; }
+
+/* ---------- Chat ---------- */
+let chatDraft="", firstChat=true;
+function chatTime(ms){ return new Date(ms).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) }
+function chatDay(ms){ const d=new Date(ms), t=new Date(); const y=new Date(); y.setDate(t.getDate()-1);
+  if(d.toDateString()===t.toDateString()) return "Heute"; if(d.toDateString()===y.toDateString()) return "Gestern";
+  return d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}); }
+function unreadChat(){ if(!me) return 0; const seen=+(ls.get("wg_chatseen_"+me)||0); return state.chat.filter(m=>m.who!==me&&m.at>seen).length; }
+function onChat(list){
+  const before=new Set(state.chat.map(m=>m.id));
+  state.chat=list;
+  if(!firstChat){ const fresh=list.filter(m=>!before.has(m.id)&&m.who!==me); if(fresh.length&&state.tab!=="chat"){ const m=fresh[fresh.length-1]; toast(`💬 ${m.who}: ${m.text.slice(0,60)}`); play(); } }
+  firstChat=false;
+  if(state.tab==="chat"){ ls.set("wg_chatseen_"+me,String(Date.now())); const box=$("#chatList"); if(box){ box.innerHTML=chatHTML(); scrollChat(); updateBadges(); return; } }
+  render();
+}
+function chatHTML(){
+  if(!state.chat.length) return `<div class="empty-state"><div class="big">💬</div><h3>Noch keine Nachrichten</h3><p>Schreibt hier rein, was sonst in der WG-Gruppe untergeht: „Wer hat meinen Joghurt gegessen?“</p></div>`;
+  let out="", day="";
+  for(const m of state.chat){
+    const d=chatDay(m.at); if(d!==day){ day=d; out+=`<div class="daysep">${esc(d)}</div>`; }
+    out+=`<div class="msg ${m.who===me?"mine":""}" style="--c:${COLORS[m.who]||"#888"}"><div class="who">${esc(m.who)}</div><div class="txt">${esc(m.text)}</div><div class="time">${new Date(m.at).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} · ${chatTime(m.at)}</div></div>`;
+  }
+  return out;
+}
+function scrollChat(){ requestAnimationFrame(()=>window.scrollTo(0,document.body.scrollHeight)); }
+function renderChat(){
+  ls.set("wg_chatseen_"+me,String(Date.now()));
+  return `<div class="chat" id="chatList">${chatHTML()}</div>
+  <div class="chatbar"><form id="chatForm"><textarea id="chatIn" rows="1" maxlength="500" placeholder="Nachricht an die WG…" aria-label="Nachricht"></textarea><button type="submit" aria-label="Senden">➤</button></form></div>`;
+}
+async function sendChat(){
+  if(!me){ pickMe(); return; }
+  const ta=$("#chatIn"); const text=ta.value.trim(); if(!text) return;
+  ta.value=""; chatDraft=""; ta.style.height="";
+  const ok=await Store.addChat({who:me,text,at:Date.now()});
+  if(ok){ play(); notify(`💬 ${me}`, text, "speech_balloon"); }
+  else { ta.value=text; chatDraft=text; }
+}
+function updateBadges(){
+  const need=state.items.filter(i=>i.status!=="full").length; const bd=$("#listBadge"); bd.hidden=!need; bd.textContent=need;
+  const u=state.tab==="chat"?0:unreadChat(); const cb=$("#chatBadge"); cb.hidden=!u; cb.textContent=u>9?"9+":u;
+}
+
+let firstItems=true;
+function onItems(items,changes){
+  state.items = items.slice().sort((a,b)=>(a.order??0)-(b.order??0)||String(a.name).localeCompare(b.name,"de"));
+  state.loaded = true;
+  if(firstItems){ firstItems=false; render(); checkWelcome(); return; }
+  // live alerts from roommates while the app is open
+  for(const ch of changes){
+    if(ch.type!=="modified"&&ch.type!=="added") continue;
+    const d=ch.doc.data(); if(!d||d.by===me||!me) continue;
+    if(Date.now()-(d.at||0)>60000) continue;
+    if(d.status==="empty"){ toast(`${d.by}: ${quip(d.name,"empty")}`); play("siren"); }
+    else if(d.status==="low"){ toast(`${d.by}: ${quip(d.name,"low")}`); play("nervous"); }
+    else if(d.status==="full" && d.boughtBy){ toast(pick(HERO).replace("{n}",d.boughtBy)+` (${d.name})`); play("fanfare"); }
+    ls.set("wg_seen_"+me,String(Date.now()));
+  }
+  render();
+}
+
+/* ---------- Welcome popup: what changed since last visit ---------- */
+function checkWelcome(){
+  if(!me){ pickMe(); return; }
+  const seen=+(ls.get("wg_seen_"+me)||0);
+  const news=state.items.filter(i=>i.status!=="full"&&i.by&&i.by!==me&&(i.at||0)>seen);
+  if(!news.length){ ls.set("wg_seen_"+me,String(Date.now())); return; }
+  const worst=news.some(i=>i.status==="empty");
+  const top=news.find(i=>i.name==="Klopapier"&&i.status==="empty")||news.find(i=>i.status==="empty")||news[0];
+  openModal(`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="wt">
+    <span class="siren" aria-hidden="true">${worst?"🚨":"⚠️"}</span>
+    <h2 id="wt">${esc(quip(top.name,top.status))}</h2>
+    <p class="sub">Seit deinem letzten Besuch, ${esc(me)}:</p>
+    <div class="alertlist">${news.map(i=>`<div class="${i.status}"><span class="em">${esc(i.emoji)}</span><div><b>${esc(i.name)}</b> ist ${ST_LABEL[i.status].toLowerCase()}<small>gemeldet von ${esc(i.by)}, ${ago(i.at)}</small></div></div>`).join("")}</div>
+    <div class="actions"><button class="btn" id="wgo">Zur Einkaufsliste</button><button class="btn ghost" id="wok">Hab's gesehen</button></div></div>`);
+  const done=(tab)=>{ ls.set("wg_seen_"+me,String(Date.now())); closeModal(); play(worst?"siren":"bell"); if(tab){state.tab=tab;render();} };
+  $("#wgo").onclick=()=>done("liste"); $("#wok").onclick=()=>done();
+}
+
+/* ---------- Modal helpers ---------- */
+function openModal(html){ $("#modal").innerHTML=`<div class="scrim">${html}</div>`; const s=$("#modal .scrim"); s.addEventListener("click",e=>{ if(e.target===s && !s.dataset.lock) closeModal(); }); setTimeout(()=>$("#modal .sheet button, #modal .sheet input")?.focus(),50); }
+function closeModal(){ $("#modal").innerHTML=""; }
+
+function pickMe(){
+  openModal(`<div class="sheet" role="dialog" aria-modal="true"><h2>Wer bist du?</h2><p class="sub">Damit die anderen sehen, wer was gemeldet oder gekauft hat. Wird auf diesem Gerät gemerkt.</p>
+    <div class="names">${PEOPLE.map(p=>`<button data-me="${p}">${avatar(p)}${p}</button>`).join("")}</div></div>`);
+  $("#modal .scrim").dataset.lock = me ? "" : "1";
+  document.querySelectorAll("[data-me]").forEach(b=>b.onclick=()=>{ me=b.dataset.me; ls.set("wg_me",me); closeModal(); play("pop"); toast(`Hi ${me}! 👋`); render(); checkWelcome(); });
+}
+
+/* ---------- Actions ---------- */
+async function cycle(id){
+  const it=state.items.find(i=>i.id===id); if(!it) return;
+  if(!me){ pickMe(); return; }
+  const status=NEXT[it.status||"full"];
+  const {id:_, ...rest}=it;
+  const data={...rest,status,by:me,at:Date.now()}; delete data.boughtBy;
+  play(status==="empty"?"sad":status==="low"?"nervous":"pop");
+  if(status!=="full"){ const q=quip(it.name,status); toast(q); notify(`${it.emoji} ${it.name} ist ${ST_LABEL[status].toLowerCase()} (${me})`, q, status==="empty"?"rotating_light":"warning"); }
+  await Store.setItem(id,data);
+  const el=document.querySelector(`[data-id="${id}"]`); el?.classList.add("bump");
+}
+
+function buySheet(id){
+  if(!me){ pickMe(); return; }
+  if(!state.items.length){ toast("Leg zuerst Artikel im Vorrat an."); return; }
+  const fixed=state.items.find(i=>i.id===id);
+  const opts=state.items.slice().sort((a,b)=>(a.status==="full")-(b.status==="full")||a.name.localeCompare(b.name,"de"));
+  openModal(`<div class="sheet" role="dialog" aria-modal="true"><h2>${fixed?esc(fixed.emoji)+" "+esc(fixed.name)+" gekauft":"Einkauf eintragen"}</h2>
+    <p class="sub">Trag den Preis ein, dann sieht jeder, wer wie viel ausgelegt hat. Der Artikel springt automatisch auf Voll.</p>
+    ${fixed?"":`<div class="field"><label for="bitem">Welcher Artikel?</label><select id="bitem">${opts.map(i=>`<option value="${i.id}">${esc(i.emoji)} ${esc(i.name)}${i.status!=="full"?" ("+ST_LABEL[i.status].toLowerCase()+")":""}</option>`).join("")}</select></div>`}
+    <div class="field"><label for="bprice">Preis in €</label><input id="bprice" inputmode="decimal" placeholder="z. B. 3,49" autocomplete="off"></div>
+    <div class="field"><label for="bwho">Gekauft von</label><select id="bwho">${PEOPLE.map(p=>`<option ${p===me?"selected":""}>${p}</option>`).join("")}</select></div>
+    <div class="actions"><button class="btn" id="bok">Gekauft 🎉</button><button class="btn ghost" id="bx">Abbrechen</button></div></div>`);
+  $("#bx").onclick=closeModal;
+  $("#bok").onclick=async()=>{
+    const raw=$("#bprice").value.trim().replace(/\s|€/g,"").replace(",",".");
+    const price = raw===""?null:Number(raw);
+    if(raw!=="" && (!isFinite(price)||price<0)){ $("#bprice").focus(); toast("Preis bitte als Zahl, z. B. 3,49"); return; }
+    const who=$("#bwho").value;
+    const it = fixed || state.items.find(i=>i.id===$("#bitem").value);
+    if(!it){ closeModal(); return; }
+    closeModal(); play("fanfare"); confetti(); toast(pick(HERO).replace("{n}",who)+` (${it.name} ist wieder voll)`);
+    notify(`${it.emoji} ${it.name} ist wieder voll`, `${who} hat eingekauft${price!=null?" ("+eur(price)+")":""}. Held des Tages! 🦸`, "tada");
+    const {id:_,...rest}=it; await Store.setItem(it.id,{...rest,status:"full",by:who,boughtBy:who,at:Date.now()});
+    await Store.addPurchase({item:it.name,itemId:it.id,emoji:it.emoji,who,price,at:Date.now()});
+  };
+}
+
+function itemSheet(id){
+  const it=id?state.items.find(i=>i.id===id):null;
+  openModal(`<div class="sheet" role="dialog" aria-modal="true"><h2>${it?"Artikel bearbeiten":"Neuer Artikel"}</h2><p class="sub">${it?"Name, Emoji, Kategorie oder Status ändern.":"Was teilt ihr euch noch?"}</p>
+    <div class="field-row"><div class="field"><label for="iemb">Symbol</label><button type="button" class="emoji-btn" id="iemb" aria-expanded="false">${esc(it?.emoji||"📦")}</button></div>
+    <div class="field"><label for="inm">Name</label><input id="inm" value="${esc(it?.name||"")}" placeholder="z. B. Kaffee" maxlength="30"></div></div>
+    <div class="emoji-grid" id="egrid" hidden>${EMOJIS.map(e=>`<button type="button" data-emo="${e}" aria-pressed="${e===(it?.emoji||"📦")}">${e}</button>`).join("")}
+      <div class="own"><label for="iem">Eigenes Emoji (Emoji-Tastatur 🌐):</label><input id="iem" value="${esc(it?.emoji||"📦")}" maxlength="8"></div></div>
+    <div class="field"><label for="icat">Kategorie</label><select id="icat">${CATS.map(c=>`<option ${c===(it?.cat||(state.cat!=="Alle"?state.cat:"Küche"))?"selected":""}>${c}</option>`).join("")}</select></div>
+    <div class="statuspick" role="group" aria-label="Status">${["full","low","empty"].map(s=>`<button class="s-${s}" data-s="${s}" aria-pressed="${(it?.status||"full")===s}">${ST_LABEL[s]}</button>`).join("")}</div>
+    <div class="actions"><button class="btn" id="iok">Speichern</button>${it?`<button class="btn danger" id="idel">Löschen</button>`:""}<button class="btn ghost" id="ix">Abbrechen</button></div></div>`);
+  let st=it?.status||"full";
+  const setEmo=e=>{ $("#iemb").textContent=e; $("#iem").value=e; document.querySelectorAll("[data-emo]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.emo===e))); };
+  $("#iemb").onclick=()=>{ const g=$("#egrid"); g.hidden=!g.hidden; $("#iemb").setAttribute("aria-expanded",String(!g.hidden)); };
+  document.querySelectorAll("[data-emo]").forEach(b=>b.onclick=()=>{ setEmo(b.dataset.emo); $("#egrid").hidden=true; $("#iemb").setAttribute("aria-expanded","false"); play(); });
+  $("#iem").oninput=()=>{ const v=$("#iem").value.trim(); if(v){ $("#iemb").textContent=v; document.querySelectorAll("[data-emo]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.emo===v))); } };
+  document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{ st=b.dataset.s; document.querySelectorAll("[data-s]").forEach(x=>x.setAttribute("aria-pressed",x===b)); play("pop"); });
+  $("#ix").onclick=closeModal;
+  if(it){ let armed=false; $("#idel").onclick=async()=>{ if(!armed){ armed=true; $("#idel").textContent="Wirklich löschen?"; return;} closeModal(); play("trash"); await Store.delItem(it.id); toast(`${it.name} gelöscht`); }; }
+  $("#iok").onclick=async()=>{
+    const name=$("#inm").value.trim(); if(!name){ $("#inm").focus(); return; }
+    const norm=s=>s.toLocaleLowerCase("de").replace(/\s+/g," ").trim();
+    const dup=state.items.find(i=>i.id!==it?.id && norm(i.name)===norm(name));
+    if(dup){ $("#inm").focus(); toast(`${dup.emoji} ${dup.name} gibt's schon im Vorrat.`); play("nervous"); return; }
+    const nid = it?.id || uid();
+    const order = it?.order ?? (Math.max(0,...state.items.map(i=>i.order||0))+1);
+    const changed = !it || it.status!==st;
+    await Store.setItem(nid,{name,emoji:$("#iem").value.trim()||"📦",cat:$("#icat").value,status:st,order,by:changed?(me||it?.by||""):(it?.by||me||""),at:changed?Date.now():(it?.at||Date.now())});
+    closeModal(); play("pop"); toast(it?"Gespeichert":`${name} hinzugefügt`);
+  };
+}
+
+async function seedStarter(){
+  if(!me){ pickMe(); return; }
+  let o=0; for(const [name,emoji,cat] of STARTER){ await Store.setItem(uid(),{name,emoji,cat,status:"full",order:++o,by:me,at:Date.now()}); }
+  play("fanfare"); confetti();
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const meBtn=$("#meBtn"); meBtn.innerHTML = me ? `${avatar(me)}${esc(me)}` : `${avatar("?")}Wer bist du?`;
+  $("#soundBtn").textContent = muted?"🔇":"🔊"; $("#soundBtn").setAttribute("aria-pressed",String(!muted));
+  document.querySelectorAll("nav.tabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===state.tab)));
+  updateBadges();
+  const v=$("#view");
+  if(!state.loaded){ v.innerHTML=`<div class="empty-state"><div class="big">📦</div><h3>Vorräte werden geladen…</h3></div>`; return; }
+  if(state.tab==="vorrat") v.innerHTML=renderVorrat();
+  else if(state.tab==="liste") v.innerHTML=renderListe();
+  else if(state.tab==="geld") v.innerHTML=renderGeld();
+  else { v.innerHTML=renderChat(); const ta=$("#chatIn"); ta.value=chatDraft; scrollChat(); updateBadges(); }
+  bindView();
+}
+
+function renderVorrat(){
+  const items=state.items;
+  if(!items.length) return `<div class="empty-state"><div class="big">🧺</div><h3>Noch keine Vorräte</h3><p>Leg mit den üblichen WG-Basics los oder füg eigene Artikel hinzu.</p><div class="actions" style="max-width:340px;margin:16px auto 0"><button class="btn" id="seed">Startartikel anlegen</button><button class="btn ghost" id="addNew">Eigener Artikel</button></div></div>`;
+  const c={full:0,low:0,empty:0}; items.forEach(i=>c[i.status||"full"]++);
+  const cats=["Alle",...CATS.filter(k=>items.some(i=>i.cat===k))];
+  if(!cats.includes(state.cat)) state.cat="Alle";
+  const shown = state.cat==="Alle"?items:items.filter(i=>i.cat===state.cat);
+  const groups = state.cat==="Alle" ? CATS.map(k=>[k,shown.filter(i=>i.cat===k)]).filter(g=>g[1].length) : [[state.cat,shown]];
+  const tile=i=>`<button class="tile ${i.status||"full"}" data-id="${i.id}" aria-label="${esc(i.name)}: ${ST_LABEL[i.status||"full"]}. Tippen zum Ändern">
+      ${state.edit?`<span class="edit" data-edit="${i.id}" aria-hidden="true">✏️</span>`:""}
+      <span class="em">${esc(i.emoji)}</span><span class="nm">${esc(i.name)}</span><span class="st">${ST_LABEL[i.status||"full"]}</span></button>`;
+  return `<div class="summary"><span class="pill ok"><span class="dot"></span>${c.full} voll</span><span class="pill low"><span class="dot"></span>${c.low} fast leer</span><span class="pill empty"><span class="dot"></span>${c.empty} leer</span></div>
+    <p class="mood">${esc(mood(items))}</p>
+    <div class="cats" role="group" aria-label="Kategorie">${cats.map(k=>`<button data-cat="${k}" aria-pressed="${k===state.cat}">${k}</button>`).join("")}<button data-toggle-edit aria-pressed="${state.edit}">${state.edit?"Fertig":"✏️ Bearbeiten"}</button></div>
+    ${groups.map(([k,arr])=>`${state.cat==="Alle"?`<div class="section-h">${k}</div>`:""}<div class="grid">${arr.map(tile).join("")}${(state.cat!=="Alle"||k===groups[groups.length-1][0])?`<button class="tile add-tile" id="addNew"><span class="em">＋</span><span class="nm">Neuer Artikel</span></button>`:""}</div>`).join("")}
+    <p class="hint">${state.edit?"Tippe auf ✏️, um einen Artikel zu ändern oder zu löschen.":"Antippen wechselt: Voll → Fast leer → Leer → Voll. Gekauft? In der Einkaufsliste abhaken, dann wird es automatisch wieder grün."}</p>`;
+}
+
+function renderListe(){
+  const need=state.items.filter(i=>i.status!=="full").sort((a,b)=>(a.status==="empty"?0:1)-(b.status==="empty"?0:1));
+  const quick=`<button class="btn ghost wide" id="manual" style="margin-top:12px">＋ Weiteren Artikel als gekauft eintragen</button>`;
+  if(!need.length) return `<div class="empty-state"><div class="big">🏆</div><h3>Nichts zu kaufen!</h3><p>${esc(pick(["Die WG ist bestens versorgt. Ihr seid Legenden.","Leerer Einkaufszettel. Gönnt euch was."]))}</p></div>${quick}`;
+  return `<p class="mood">${need.length} ${need.length===1?"Sache fehlt":"Sachen fehlen"}. Wer geht?</p>
+  <div class="list">${need.map(i=>`<div class="row"><span class="stbar" style="background:var(--${i.status})"></span><span class="em">${esc(i.emoji)}</span>
+    <div class="tx"><b>${esc(i.name)}</b><span>${ST_LABEL[i.status]} · ${esc(i.by||"?")}, ${ago(i.at||Date.now())}</span></div>
+    <button class="btn" data-buy="${i.id}">Gekauft</button></div>`).join("")}</div>${quick}`;
+}
+
+function renderGeld(){
+  const P=state.purchases.slice().sort((a,b)=>b.at-a.at);
+  const now=new Date(); const mStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+  const month=P.filter(p=>p.at>=mStart);
+  const stats=Object.fromEntries(PEOPLE.map(n=>[n,{count:0,sum:0,mcount:0}]));
+  P.forEach(p=>{ if(stats[p.who]){ stats[p.who].count++; stats[p.who].sum+=p.price||0; if(p.at>=mStart) stats[p.who].mcount++; } });
+  const total=PEOPLE.reduce((s,n)=>s+stats[n].sum,0); const share=total/PEOPLE.length;
+  const mc=PEOPLE.map(n=>stats[n].mcount); const max=Math.max(...mc), min=Math.min(...mc);
+  const monthName=now.toLocaleDateString("de-DE",{month:"long"});
+  const board=`<div class="section-h">Wer kauft ein? (${monthName})</div><div class="board">${PEOPLE.map(n=>{
+    const s=stats[n]; const isTop=max>0&&s.mcount===max; const isMessi=isTop||s.mcount>0;
+    return `<div class="person">${isTop?`<span class="crown" aria-label="Nummer 1 im Monat">👑</span>`:""}${avatar(n)}<b>${n}</b><div class="num">${s.mcount}×</div><small>gesamt ${eur(s.sum)}</small><span class="title">${isMessi?"Messi-Fan 🐐":"Ronaldo-Fan 😤"}</span></div>`}).join("")}</div>`;
+  const bal = total>0 ? `<div class="section-h">Wer schuldet wem? (alles gedrittelt)</div><div class="card balance">
+     <div><span>Gesamt ausgegeben</span><span class="money">${eur(total)}</span></div><div><span>Anteil pro Person</span><span class="money">${eur(share)}</span></div>
+     ${PEOPLE.map(n=>{const d=stats[n].sum-share; return `<div><span>${n}</span><span class="money ${d>=0.005?"pos":d<=-0.005?"neg":""}">${d>=0.005?"bekommt "+eur(d):d<=-0.005?"zahlt "+eur(-d):"ausgeglichen"}</span></div>`}).join("")}</div>` : "";
+  const list = P.length ? `<div class="section-h">Alle Einkäufe</div><div class="list">${P.map(p=>`<div class="row">${avatar(p.who)}<div class="tx"><b>${esc(p.emoji||"🛍️")} ${esc(p.item)}</b><span>${esc(p.who)} · ${fdate(p.at)}</span></div><span class="money">${p.price==null?"–":eur(p.price)}</span><button class="iconbtn" style="box-shadow:none;background:var(--surface-2);width:34px;height:34px;font-size:14px" data-delp="${p.id}" aria-label="Eintrag löschen">✕</button></div>`).join("")}</div>`
+    : `<div class="empty-state"><div class="big">🧾</div><h3>Noch keine Einkäufe</h3><p>Wenn jemand in der Einkaufsliste auf „Gekauft“ tippt und den Preis einträgt, landet es hier.</p></div>`;
+  return board+bal+`<button class="btn ghost wide" id="manual" style="margin-top:14px">＋ Einkauf eintragen</button>`+list;
+}
+
+function bindView(){
+  const cf=$("#chatForm");
+  if(cf){ const ta=$("#chatIn");
+    cf.onsubmit=e=>{ e.preventDefault(); sendChat(); };
+    ta.oninput=()=>{ chatDraft=ta.value; ta.style.height="auto"; ta.style.height=Math.min(ta.scrollHeight,110)+"px"; };
+    ta.onkeydown=e=>{ if(e.key==="Enter"&&!e.shiftKey&&!/iPhone|iPad|Android/.test(navigator.userAgent)){ e.preventDefault(); sendChat(); } };
+  }
+  document.querySelectorAll("[data-id]").forEach(b=>b.onclick=e=>{ if(e.target.closest("[data-edit]")){ itemSheet(e.target.closest("[data-edit]").dataset.edit); return;} if(state.edit){ itemSheet(b.dataset.id); return;} cycle(b.dataset.id); });
+  document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{ state.cat=b.dataset.cat; play("pop"); render(); });
+  const te=document.querySelector("[data-toggle-edit]"); if(te) te.onclick=()=>{ state.edit=!state.edit; play("pop"); render(); };
+  document.querySelectorAll("#addNew").forEach(b=>b.onclick=()=>itemSheet(null));
+  const sd=$("#seed"); if(sd) sd.onclick=seedStarter;
+  document.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buySheet(b.dataset.buy));
+  const mn=$("#manual"); if(mn) mn.onclick=()=>buySheet(null);
+  document.querySelectorAll("[data-delp]").forEach(b=>{ let armed=false; b.onclick=async()=>{ if(!armed){armed=true;b.textContent="?";b.setAttribute("aria-label","Nochmal tippen zum Löschen");setTimeout(()=>{armed=false;b.textContent="✕"},2500);return;} play("trash"); await Store.delPurchase(b.dataset.delp); }; });
+}
+
+document.querySelectorAll("nav.tabs [data-tab]").forEach(b=>b.onclick=()=>{ state.tab=b.dataset.tab; state.edit=false; play("pop"); render(); scrollTo(0,0); });
+$("#meBtn").onclick=pickMe;
+$("#soundBtn").onclick=()=>{ muted=!muted; ls.set("wg_muted",muted?"1":"0"); render(); if(!muted) play("bell"); };
+setInterval(()=>{ if(state.tab==="liste") render(); },60000);
+
+render();
+Store.init();
+</script>
+</body>
+</html>
