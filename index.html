@@ -282,8 +282,12 @@ function mood(items){
 
 /* ---------- Sounds (Web Audio, no files) ---------- */
 let actx=null; let muted = ls.get("wg_muted")==="1";
-function audio(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){} } if(actx&&actx.state==="suspended") actx.resume(); return actx; }
-document.addEventListener("pointerdown",()=>audio(),{once:true});
+/* iOS: Web Audio auch bei Lautlos-Schalter abspielen (Safari 16.4+) */
+try{ if(navigator.audioSession) navigator.audioSession.type="playback"; }catch(e){}
+function audio(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){} } if(actx&&actx.state!=="running") actx.resume().catch(()=>{}); return actx; }
+/* Safari entsperrt Audio nicht immer beim ersten Tippen: bei jeder Geste erneut versuchen, bis es läuft */
+function unlockAudio(){ const a=audio(); if(a&&a.state==="running"){ ["pointerdown","touchend","click","keydown"].forEach(ev=>document.removeEventListener(ev,unlockAudio,true)); } }
+["pointerdown","touchend","click","keydown"].forEach(ev=>document.addEventListener(ev,unlockAudio,true));
 function tone(f,start,dur,type="sine",vol=.18,f2){const a=audio(); if(!a||muted)return; const t=a.currentTime+start; const o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.02); g.gain.exponentialRampToValueAtTime(.001,t+dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+.05);}
 /* Ein einziger, dezenter Hinweiston für alles */
 const SFX = { ding(){ tone(880,0,.18,"sine",.12); tone(1320,.09,.25,"sine",.07); } };
@@ -296,7 +300,7 @@ async function loadKauf(){
   try{ const a=audio(); if(!a) return; const r=await fetch(KAUF_SOUND,{cache:"no-cache"}); if(!r.ok) return;
        kaufBuf=await a.decodeAudioData(await r.arrayBuffer()); }catch(e){ kaufBuf=null; }
 }
-document.addEventListener("pointerdown",()=>loadKauf(),{once:true});
+loadKauf(); /* Dekodieren geht auch vor dem Entsperren, so ist der Ton schon beim ersten Kauf bereit */
 function play(n){
   if(muted) return;
   try{
