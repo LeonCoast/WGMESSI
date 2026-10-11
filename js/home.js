@@ -63,7 +63,7 @@ function renderHome(){
 function cardVorrat(){
   const c={full:0,low:0,empty:0}; state.items.forEach(i=>c[i.status||"full"]++);
   const need=state.items.filter(i=>i.status!=="full").sort((a,b)=>(a.status==="empty"?0:1)-(b.status==="empty"?0:1));
-  return `<button class="dcard" data-go="${need.length?"liste":"vorrat"}"><span class="dh"><span>🧺 Vorrat</span><span aria-hidden="true">›</span></span>
+  return `<button class="dcard" data-go="vorrat"><span class="dh"><span>🧺 Vorrat</span><span aria-hidden="true">›</span></span>
     <span class="summary mini"><span class="pill ok">${c.full}</span><span class="pill low">${c.low}</span><span class="pill empty">${c.empty}</span></span>
     <span class="dsub">${need.length?`Fehlt: ${esc(need.slice(0,3).map(i=>i.emoji+" "+i.name).join(", "))}${need.length>3?" …":""}`:state.items.length?"Alles da ✨":"Noch keine Artikel"}</span></button>`;
 }
