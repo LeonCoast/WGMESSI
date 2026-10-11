@@ -214,6 +214,39 @@ canvas#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:non
 .rtext{white-space:pre-wrap;font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--surface-2);border-radius:12px;padding:10px;margin:8px 0 0;max-height:240px;overflow:auto}
 .progress{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin:4px 0 16px}
 .progress span{display:block;height:100%;width:3%;background:var(--accent);transition:width .3s}
+.hello h2{margin:6px 0 2px;font:800 26px/1.1 var(--f-display)} .hello p{margin:0;color:var(--muted)}
+.todos{display:flex;flex-direction:column;gap:8px}
+.todo{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:16px;padding:10px 12px;box-shadow:var(--shadow)}
+.todo .em{font-size:24px;flex:none;width:30px;text-align:center}
+.todo .tx{flex:1;min-width:0;text-align:left;padding:0}
+.todo .tx b{display:block;font-size:15px}
+.todo .tx span{display:block;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.todo .check{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:15px;font-weight:800;color:transparent}
+.todo.done .check{background:var(--ok);border-color:var(--ok);color:#fff}
+.todo.done .tx b{text-decoration:line-through;color:var(--muted)}
+.btn.sm{padding:8px 12px;font-size:14px}
+.empty-mini{color:var(--muted);font-size:14px;margin:0;padding:4px 2px}
+.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.dcard{display:flex;flex-direction:column;align-items:stretch;gap:8px;text-align:left;background:var(--surface);border-radius:18px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.dcard .dh{display:flex;justify-content:space-between;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dcard .big{font:800 24px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.dcard .dsub{color:var(--muted);font-size:13px;line-height:1.4}
+.dcard .summary.mini{margin:0;gap:4px} .dcard .summary.mini .pill{padding:4px 9px}
+.dcard .drow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--surface-2);font-weight:700;font-size:14px}
+.tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
+.tag.full{background:var(--empty-bg);color:var(--empty)}
+.avs{display:flex;gap:4px;flex-wrap:wrap}
+.wrap{padding-bottom:160px}
+.chatfab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:35;width:56px;height:56px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:24px;box-shadow:0 6px 20px rgba(0,0,0,.25);display:grid;place-items:center}
+.chatfab .badge{top:-2px;right:-2px}
+.chatpanel{position:fixed;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:40;width:min(400px,calc(100vw - 24px));height:min(560px,calc(100dvh - 150px));background:var(--bg);border:1px solid var(--line);border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden;animation:up .2s ease}
+.chatpanel header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.chatpanel header h2{margin:0;font:800 18px var(--f-display)}
+.chatpanel header .iconbtn{width:36px;height:36px;font-size:15px;box-shadow:none;background:var(--surface-2)}
+.chatpanel .chat{flex:1;overflow-y:auto;padding:12px;overscroll-behavior:contain}
+.chatpanel form{display:flex;gap:8px;padding:10px;background:var(--surface);border-top:1px solid var(--line)}
+.chatpanel textarea{flex:1;min-width:0;resize:none;font:500 16px/1.35 var(--f-body);padding:10px 14px;border-radius:20px;border:2px solid var(--line);background:var(--bg);color:var(--ink);max-height:110px}
+.chatpanel form button{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:20px;flex:none;align-self:flex-end}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -231,12 +264,18 @@ canvas#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:non
 </div>
 
 <nav class="tabs" role="tablist"><div class="in">
-  <button role="tab" data-tab="vorrat" aria-selected="true"><span class="ic">🏠</span>Vorrat</button>
+  <button role="tab" data-tab="home" aria-selected="true"><span class="ic">🏠</span>Home</button>
+  <button role="tab" data-tab="vorrat" aria-selected="false"><span class="ic">🧺</span>Vorrat</button>
   <button role="tab" data-tab="liste" aria-selected="false"><span class="ic">🛒</span>Einkaufsliste<span class="badge" id="listBadge" hidden></span></button>
   <button role="tab" data-tab="geld" aria-selected="false"><span class="ic">💶</span>Ausgaben</button>
   <button role="tab" data-tab="kalender" aria-selected="false"><span class="ic">📅</span>Kalender</button>
-  <button role="tab" data-tab="chat" aria-selected="false"><span class="ic">💬</span>Chat<span class="badge" id="chatBadge" hidden></span></button>
 </div></nav>
+<button class="chatfab" id="chatFab" aria-label="Chat öffnen" aria-expanded="false" aria-controls="chatPanel">💬<span class="badge" id="chatBadge" hidden></span></button>
+<section class="chatpanel" id="chatPanel" role="dialog" aria-label="WG-Chat" hidden>
+  <header><h2>💬 WG-Chat</h2><button class="iconbtn" id="chatClose" aria-label="Chat schließen">✕</button></header>
+  <div class="chat" id="chatList"></div>
+  <form id="chatForm"><textarea id="chatIn" rows="1" maxlength="500" placeholder="Nachricht an die WG…" aria-label="Nachricht"></textarea><button type="submit" aria-label="Senden">➤</button></form>
+</section>
 <div id="modal"></div>
 <canvas id="confetti" hidden></canvas>
 
@@ -350,7 +389,7 @@ function confetti(){
 let toastT; function toast(msg){ const el=document.createElement("div"); el.className="toast"; el.textContent=msg; document.querySelectorAll(".toast").forEach(t=>t.remove()); document.body.appendChild(el); clearTimeout(toastT); toastT=setTimeout(()=>el.remove(),3200); }
 
 /* ---------- Store (shared db, or local fallback) ---------- */
-const state = { items:[], purchases:[], chat:[], bins:{}, away:[], prefs:{}, calOff:0, loaded:false, shared:false, tab:"vorrat", cat:"Alle", edit:false };
+const state = { items:[], purchases:[], chat:[], bins:{}, away:[], prefs:{}, todos:[], chatOpen:false, calOff:0, loaded:false, shared:false, tab:"home", cat:"Alle", edit:false };
 let me = ls.get("wg_me"); if(!PEOPLE.includes(me)) me=null;
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
@@ -373,14 +412,15 @@ const Store = {
       db.collection("chat").orderBy("at","desc").limit(300).onSnapshot(snap=>{ onChat(snap.docs.map(d=>({id:d.id,...d.data()})).reverse()); }, ()=>{});
       db.collection("away").onSnapshot(snap=>{ state.away=snap.docs.map(d=>({id:d.id,...d.data()})); render(); }, ()=>{});
       db.collection("bins").onSnapshot(snap=>{ onBins(Object.fromEntries(snap.docs.map(d=>[d.id,d.data()])), snap.docChanges()); }, ()=>{});
+      db.collection("todos").onSnapshot(snap=>{ state.todos=snap.docs.map(d=>({id:d.id,...d.data()})); render(); }, ()=>{});
       db.collection("prefs").onSnapshot(snap=>{ state.prefs=Object.fromEntries(snap.docs.map(d=>[d.id,d.data()])); }, ()=>{});
     } else {
       showNotice(LOCAL_DEV ? "Lokaler Testmodus: Änderungen werden nur auf diesem Gerät gespeichert, keine Push-Nachrichten." : "Firebase ist noch nicht eingerichtet: Änderungen werden nur auf diesem Gerät gespeichert.");
       let saved=null; try{ saved=JSON.parse(ls.get("wg_local")||"null") }catch(e){}
-      state.purchases = saved?.purchases||[]; state.chat = saved?.chat||[]; state.bins = saved?.bins||{}; state.away = saved?.away||[]; state.prefs = saved?.prefs||{}; onItems(saved?.items||[],[]);
+      state.purchases = saved?.purchases||[]; state.chat = saved?.chat||[]; state.bins = saved?.bins||{}; state.away = saved?.away||[]; state.prefs = saved?.prefs||{}; state.todos = saved?.todos||[]; onItems(saved?.items||[],[]);
     }
   },
-  saveLocal(){ ls.set("wg_local",JSON.stringify({items:state.items,purchases:state.purchases,chat:state.chat,bins:state.bins,away:state.away,prefs:state.prefs})) },
+  saveLocal(){ ls.set("wg_local",JSON.stringify({items:state.items,purchases:state.purchases,chat:state.chat,bins:state.bins,away:state.away,prefs:state.prefs,todos:state.todos})) },
   async setItem(id,data){
     if(this.db){ try{ await this.db.doc("items/"+id).set(data) }catch(e){ writeErr(e) } }
     else { const i=state.items.findIndex(x=>x.id===id); const v={id,...data}; i<0?state.items.push(v):state.items[i]=v; this.saveLocal(); onItems(state.items,[]); }
@@ -430,6 +470,14 @@ const Store = {
     if(this.db){ try{ await this.db.doc("away/"+id).delete() }catch(e){ writeErr(e) } }
     else { state.away=state.away.filter(x=>x.id!==id); this.saveLocal(); render(); }
   },
+  async setTodo(id,data){
+    if(this.db){ try{ await this.db.doc("todos/"+id).set(data) }catch(e){ writeErr(e) } }
+    else { const i=state.todos.findIndex(x=>x.id===id); const v={id,...data}; i<0?state.todos.push(v):state.todos[i]=v; this.saveLocal(); render(); }
+  },
+  async delTodo(id){
+    if(this.db){ try{ await this.db.doc("todos/"+id).delete() }catch(e){ writeErr(e) } }
+    else { state.todos=state.todos.filter(x=>x.id!==id); this.saveLocal(); render(); }
+  },
   async setPrefs(who,data){
     state.prefs[who]=data;
     if(this.db){ try{ await this.db.doc("prefs/"+who).set(data) }catch(e){ writeErr(e) } }
@@ -445,13 +493,14 @@ function writeErr(e){ console.error(e); toast(e?.code==="permission-denied" ? "K
    wofür sie Push bekommt (prefs/<Name> in der Datenbank). Eigene Aktionen schicken einem selbst nichts. */
 const PUSH_EVENTS = [
   ["leer","Etwas ist leer","🚨",true], ["fastleer","Etwas ist fast leer","⚠️",false], ["kauf","Jemand hat eingekauft","🎉",true],
-  ["muell","Müll ist voll","🗑️",true], ["kalender","Jemand ist nicht da (Kalender)","📅",false], ["chat","Neue Chat-Nachricht","💬",true] ];
+  ["muell","Müll ist voll","🗑️",true], ["kalender","Jemand ist nicht da (Kalender)","📅",false], ["chat","Neue Chat-Nachricht","💬",true],
+  ["todo","Neues To-do","✅",true], ["geld","Jemand hat dir Geld zurückgegeben","💸",true] ];
 const pushTopic = p => `${NTFY_TOPIC}-${p.toLowerCase()}`;
 const wantsPush = (p,ev) => { const d=PUSH_EVENTS.find(x=>x[0]===ev); return !!d && (state.prefs[p]?.[ev] ?? d[3]); };
-function sendPush(ev,title,message,tags){
+function sendPush(ev,title,message,tags,only){
   if(!NTFY_TOPIC || LOCAL_DEV) return;
   for(const p of PEOPLE){
-    if(p===me || !wantsPush(p,ev)) continue;
+    if(p===me || (only && p!==only) || !wantsPush(p,ev)) continue;
     try{ fetch("https://ntfy.sh/",{method:"POST",keepalive:true,body:JSON.stringify({topic:pushTopic(p),title,message,tags:[tags],priority:tags==="rotating_light"?4:3})}).catch(()=>{}); }catch(e){}
   }
 }
@@ -480,10 +529,10 @@ function unreadChat(){ if(!me) return 0; const seen=+(ls.get("wg_chatseen_"+me)|
 function onChat(list){
   const before=new Set(state.chat.map(m=>m.id));
   state.chat=list;
-  if(!firstChat){ const fresh=list.filter(m=>!before.has(m.id)&&m.who!==me); if(fresh.length&&state.tab!=="chat"){ const m=fresh[fresh.length-1]; toast(`💬 ${m.who}: ${m.text.slice(0,60)}`); play(); } }
+  if(!firstChat){ const fresh=list.filter(m=>!before.has(m.id)&&m.who!==me); if(fresh.length&&!state.chatOpen){ const m=fresh[fresh.length-1]; toast(`💬 ${m.who}: ${m.text.slice(0,60)}`); play(); } }
   firstChat=false;
-  if(state.tab==="chat"){ ls.set("wg_chatseen_"+me,String(Date.now())); const box=$("#chatList"); if(box){ box.innerHTML=chatHTML(); scrollChat(); updateBadges(); return; } }
-  render();
+  if(state.chatOpen){ ls.set("wg_chatseen_"+me,String(Date.now())); renderChatList(); }
+  updateBadges();
 }
 function chatHTML(){
   if(!state.chat.length) return `<div class="empty-state"><div class="big">💬</div><h3>Noch keine Nachrichten</h3><p>Schreibt hier rein, was sonst in der WG-Gruppe untergeht: „Wer hat meinen Joghurt gegessen?“</p></div>`;
@@ -494,12 +543,7 @@ function chatHTML(){
   }
   return out;
 }
-function scrollChat(){ requestAnimationFrame(()=>window.scrollTo(0,document.body.scrollHeight)); }
-function renderChat(){
-  ls.set("wg_chatseen_"+me,String(Date.now()));
-  return `<div class="chat" id="chatList">${chatHTML()}</div>
-  <div class="chatbar"><form id="chatForm"><textarea id="chatIn" rows="1" maxlength="500" placeholder="Nachricht an die WG…" aria-label="Nachricht"></textarea><button type="submit" aria-label="Senden">➤</button></form></div>`;
-}
+function scrollChat(){ requestAnimationFrame(()=>{ const b=$("#chatList"); if(b) b.scrollTop=b.scrollHeight; }); }
 async function sendChat(){
   if(!me){ pickMe(); return; }
   const ta=$("#chatIn"); const text=ta.value.trim(); if(!text) return;
@@ -510,7 +554,7 @@ async function sendChat(){
 }
 function updateBadges(){
   const need=state.items.filter(i=>i.status!=="full").length; const bd=$("#listBadge"); bd.hidden=!need; bd.textContent=need;
-  const u=state.tab==="chat"?0:unreadChat(); const cb=$("#chatBadge"); cb.hidden=!u; cb.textContent=u>9?"9+":u;
+  const u=state.chatOpen?0:unreadChat(); const cb=$("#chatBadge"); cb.hidden=!u; cb.textContent=u>9?"9+":u;
 }
 
 let firstItems=true;
@@ -929,6 +973,155 @@ function pushSheet(){
   $("#px").onclick=closeModal;
 }
 
+/* ---------- Geld: wer schuldet wem ---------- */
+/* Einkäufe werden gedrittelt. Ausgleichszahlungen (kind:"settle") verschieben nur Geld zwischen zwei Personen. */
+function money(){
+  const real=state.purchases.filter(p=>p.kind!=="settle");
+  const paid=Object.fromEntries(PEOPLE.map(n=>[n,0]));
+  real.forEach(p=>{ if(p.who in paid) paid[p.who]+=p.price||0; });
+  const total=PEOPLE.reduce((s,n)=>s+paid[n],0), share=total/PEOPLE.length;
+  const bal=Object.fromEntries(PEOPLE.map(n=>[n,paid[n]-share]));
+  state.purchases.forEach(p=>{ if(p.kind==="settle" && p.who in bal && p.to in bal){ bal[p.who]+=p.price||0; bal[p.to]-=p.price||0; } });
+  // Überweisungen: größter Schuldner zahlt an größten Gläubiger
+  const deb=PEOPLE.filter(n=>bal[n]<-.005).map(n=>[n,-bal[n]]).sort((a,b)=>b[1]-a[1]);
+  const cred=PEOPLE.filter(n=>bal[n]>.005).map(n=>[n,bal[n]]).sort((a,b)=>b[1]-a[1]);
+  const tx=[]; let i=0, j=0;
+  while(i<deb.length && j<cred.length){ const x=Math.min(deb[i][1],cred[j][1]);
+    if(x>=.01) tx.push({from:deb[i][0],to:cred[j][0],amount:Math.round(x*100)/100});
+    deb[i][1]-=x; cred[j][1]-=x; if(deb[i][1]<.005) i++; if(cred[j][1]<.005) j++; }
+  return {real,total,share,bal,tx};
+}
+function settleSheet(from,to,amount){
+  if(!me){ pickMe(); return; }
+  openModal(`<div class="sheet" role="dialog" aria-modal="true"><h2>💸 Ausgleich</h2>
+    <p class="sub">${esc(from)} hat ${esc(to)} Geld gegeben? Dann wird es hier verrechnet.</p>
+    <div class="field"><label for="samt">Betrag in €</label><input id="samt" inputmode="decimal" value="${String(amount.toFixed(2)).replace(".",",")}" autocomplete="off"></div>
+    <div class="actions"><button class="btn" id="sok">Bezahlt ✓</button><button class="btn ghost" id="sx">Abbrechen</button></div></div>`);
+  $("#sx").onclick=closeModal;
+  $("#sok").onclick=async()=>{
+    const price=toNum($("#samt").value);
+    if(!price||Number.isNaN(price)||price<0){ $("#samt").focus(); toast("Betrag bitte als Zahl, z. B. 4,20"); return; }
+    closeModal(); play("kauf"); toast(`${from} → ${to}: ${eur(price)} verrechnet`);
+    sendPush("geld", `💸 ${from} hat dir ${eur(price)} gegeben`, "Ist in der App verrechnet.", "money_with_wings", to);
+    await Store.addPurchase({kind:"settle",item:`Ausgleich an ${to}`,emoji:"💸",who:from,to,price,by:me,at:Date.now()});
+  };
+}
+
+/* ---------- Eigene To-dos ---------- */
+function todoSheet(id){
+  if(!me){ pickMe(); return; }
+  const t=id?state.todos.find(x=>x.id===id):null;
+  openModal(`<div class="sheet" role="dialog" aria-modal="true"><h2>${t?"To-do bearbeiten":"Neues To-do"}</h2>
+    <p class="sub">${t?`Angelegt von ${esc(t.by)}, ${ago(t.at)}.`:"Was muss in der WG erledigt werden?"}</p>
+    <div class="field"><label for="ttext">Was</label><input id="ttext" value="${esc(t?.text||"")}" placeholder="z. B. Bad putzen" maxlength="80"></div>
+    <div class="field"><label for="twho">Für wen</label><select id="twho"><option value="">🏠 Die ganze WG</option>${PEOPLE.map(p=>`<option value="${p}" ${p===t?.who?"selected":""}>${p}${p===me?" (du)":""}</option>`).join("")}</select></div>
+    <div class="actions"><button class="btn" id="tok">Speichern</button>${t?`<button class="btn danger" id="tdel">Löschen</button>`:""}<button class="btn ghost" id="tx">Abbrechen</button></div></div>`);
+  $("#tx").onclick=closeModal;
+  if(t){ let armed=false; $("#tdel").onclick=async()=>{ if(!armed){ armed=true; $("#tdel").textContent="Wirklich löschen?"; return; } closeModal(); play("trash"); await Store.delTodo(t.id); }; }
+  $("#tok").onclick=async()=>{
+    const text=$("#ttext").value.trim(), who=$("#twho").value; if(!text){ $("#ttext").focus(); return; }
+    closeModal(); play("pop");
+    if(!t || t.who!==who){ if(who) sendPush("todo", `✅ Neues To-do für dich`, `${text} (von ${me})`, "white_check_mark", who); else sendPush("todo", `✅ Neues WG-To-do`, `${text} (von ${me})`, "white_check_mark"); }
+    await Store.setTodo(t?.id||uid(), {...(t?{text:t.text,who:t.who,done:t.done,doneBy:t.doneBy||null,doneAt:t.doneAt||null,by:t.by,at:t.at}:{done:false,by:me,at:Date.now()}), text, who});
+  };
+}
+async function toggleTodo(id){
+  const t=state.todos.find(x=>x.id===id); if(!t) return;
+  if(!me){ pickMe(); return; }
+  const done=!t.done; play(done?"kauf":"pop"); if(done) toast(pick(["Erledigt 💪","Abgehakt. Stark!","Weg damit ✅"]));
+  const {id:_,...rest}=t; await Store.setTodo(id,{...rest,done,doneBy:done?me:null,doneAt:done?Date.now():null});
+}
+
+/* ---------- Home: To-dos + Überblick ---------- */
+/* Automatische To-dos entstehen aus dem Stand der App und verschwinden von selbst */
+function autoTodos(){
+  const out=[], today=isoDay(Date.now());
+  const need=state.items.filter(i=>i.status!=="full").sort((a,b)=>(a.status==="empty"?0:1)-(b.status==="empty"?0:1));
+  if(need.length){
+    const mStart=new Date(new Date().getFullYear(),new Date().getMonth(),1).getTime();
+    const cnt=Object.fromEntries(PEOPLE.map(n=>[n,0])); state.purchases.forEach(p=>{ if(p.kind!=="settle"&&p.at>=mStart&&p.who in cnt) cnt[p.who]++; });
+    const here=PEOPLE.filter(p=>!awayOn(p,today)), min=Math.min(...here.map(p=>cnt[p])), low=here.filter(p=>cnt[p]===min);
+    const turn=low.length===1&&here.length>1?low[0]:"";
+    const names=need.slice(0,3).map(i=>i.name).join(", ")+(need.length>3?` +${need.length-3}`:"");
+    out.push({who:turn===me?me:"",em:"🛒",title:turn===me?"Du bist mit Einkaufen dran":"Einkaufen",sub:esc(names)+(turn&&turn!==me?` · Vorschlag: ${esc(turn)}`:""),btn:`<button class="btn sm" data-go="liste">Liste</button>`});
+  }
+  for(const [id,name,em] of BINS){ const b=state.bins[id];
+    if(b?.status==="full") out.push({who:"",em,title:`${name} rausbringen`,sub:`Voll gemeldet von ${esc(b.by)}, ${ago(b.at)}`,btn:`<button class="btn sm" data-bin="${id}">Erledigt</button>`}); }
+  for(const t of money().tx) if(t.from===me && t.amount>=1)
+    out.push({who:me,em:"💸",title:`${t.to} ${eur(t.amount)} zahlen`,sub:"Damit ihr wieder quitt seid",btn:`<button class="btn sm" data-settle="${t.from}|${t.to}|${t.amount}">Bezahlt</button>`});
+  return out;
+}
+function renderHome(){
+  const autos=autoTodos();
+  const visible=state.todos.filter(t=>!t.done||Date.now()-(t.doneAt||0)<12*36e5).sort((a,b)=>(a.done-b.done)||(b.at-a.at));
+  const autoRow=a=>`<div class="todo"><span class="em" aria-hidden="true">${a.em}</span><div class="tx"><b>${esc(a.title)}</b><span>${a.sub}</span></div>${a.btn}</div>`;
+  const ownRow=t=>`<div class="todo ${t.done?"done":""}"><button class="check" data-todo-done="${t.id}" aria-pressed="${!!t.done}" aria-label="${esc(t.text)}: ${t.done?"erledigt":"offen"}">✓</button>
+    <button class="tx" data-todo="${t.id}"><b>${esc(t.text)}</b><span>${t.done?`erledigt von ${esc(t.doneBy)}`:`${t.who?"für "+esc(t.who===me?"dich":t.who):"WG"} · ${esc(t.by)}, ${ago(t.at)}`}</span></button>${t.who&&t.who!==me?avatar(t.who):""}</div>`;
+  const mine=[...autos.filter(a=>a.who===me).map(autoRow),...visible.filter(t=>me&&t.who===me).map(ownRow)];
+  const wg=[...autos.filter(a=>a.who!==me).map(autoRow),...visible.filter(t=>!me||t.who!==me).map(ownRow)];
+  const open=autos.length+state.todos.filter(t=>!t.done).length;
+  const dateStr=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
+  return `<div class="hello"><h2>${me?`Hi ${esc(me)} 👋`:"Hi 👋"}</h2><p>${esc(dateStr)} · ${open?`${open} ${open===1?"Sache":"Sachen"} offen`:"Alles erledigt ✨"}</p></div>
+    <div class="section-h">Für dich</div>
+    ${mine.length?`<div class="todos">${mine.join("")}</div>`:`<p class="empty-mini">Nichts für dich zu tun. Gönn dir. 🛋️</p>`}
+    <div class="section-h">WG</div>
+    ${wg.length?`<div class="todos">${wg.join("")}</div>`:`<p class="empty-mini">Die WG läuft. Keine offenen Aufgaben.</p>`}
+    <button class="btn ghost wide" id="addTodo" style="margin-top:10px">＋ To-do anlegen</button>
+    <div class="section-h">Überblick</div>
+    <div class="dash">${cardVorrat()}${cardMuell()}${cardDa()}${cardGeld()}</div>`;
+}
+function cardVorrat(){
+  const c={full:0,low:0,empty:0}; state.items.forEach(i=>c[i.status||"full"]++);
+  const need=state.items.filter(i=>i.status!=="full").sort((a,b)=>(a.status==="empty"?0:1)-(b.status==="empty"?0:1));
+  return `<button class="dcard" data-go="${need.length?"liste":"vorrat"}"><span class="dh"><span>🧺 Vorrat</span><span aria-hidden="true">›</span></span>
+    <span class="summary mini"><span class="pill ok">${c.full}</span><span class="pill low">${c.low}</span><span class="pill empty">${c.empty}</span></span>
+    <span class="dsub">${need.length?`Fehlt: ${esc(need.slice(0,3).map(i=>i.emoji+" "+i.name).join(", "))}${need.length>3?" …":""}`:state.items.length?"Alles da ✨":"Noch keine Artikel"}</span></button>`;
+}
+function cardMuell(){
+  return `<div class="dcard"><span class="dh"><span>🗑️ Müll</span></span>
+    ${BINS.map(([id,name,em])=>{ const full=state.bins[id]?.status==="full";
+      return `<button class="drow" data-bin="${id}" aria-label="${name}: ${full?"voll":"okay"}. Tippen zum Ändern"><span>${em} ${name}</span><span class="tag ${full?"full":""}">${full?"Voll":"Okay"}</span></button>`; }).join("")}</div>`;
+}
+function cardDa(){
+  const today=isoDay(Date.now()), here=PEOPLE.filter(p=>!awayOn(p,today));
+  const awayNow=state.away.filter(a=>a.from<=today&&today<=a.to);
+  const in7=isoDay(Date.now()+7*864e5), soon=state.away.filter(a=>a.from>today&&a.from<=in7).sort((a,b)=>a.from.localeCompare(b.from));
+  const lines=[...awayNow.map(a=>`${esc(a.who)} weg bis ${esc(fday(a.to))}`),...soon.slice(0,2).map(a=>`${esc(a.who)} ab ${esc(fday(a.from))}`)];
+  return `<button class="dcard" data-go="kalender"><span class="dh"><span>📅 Wer ist da</span><span aria-hidden="true">›</span></span>
+    <span class="avs">${here.length?here.map(p=>avatar(p)).join(""):`<span class="dsub">Heute niemand zu Hause</span>`}</span>
+    <span class="dsub">${lines.length?lines.join("<br>"):"Diese Woche sind alle da"}</span></button>`;
+}
+function cardGeld(){
+  const M=money(), b=me?M.bal[me]:0, last=state.purchases.filter(p=>p.kind!=="settle").sort((a,c)=>c.at-a.at)[0];
+  const mStart=new Date(new Date().getFullYear(),new Date().getMonth(),1).getTime(), month=M.real.filter(p=>p.at>=mStart).reduce((s,p)=>s+(p.price||0),0);
+  return `<button class="dcard" data-go="geld"><span class="dh"><span>💶 Geld</span><span aria-hidden="true">›</span></span>
+    <span class="big ${b>=.005?"pos":b<=-.005?"neg":""}">${!me?"–":b>=.005?"+"+eur(b):b<=-.005?"−"+eur(-b):"Quitt"}</span>
+    <span class="dsub">${me?(b>=.005?"bekommst du":b<=-.005?"zahlst du":"alles ausgeglichen"):""}<br>${esc(new Date().toLocaleDateString("de-DE",{month:"long"}))}: ${eur(month)}${last?`<br>Zuletzt: ${esc(last.who)} · ${esc(last.item)}`:""}</span></button>`;
+}
+
+/* ---------- Chat als Pop-up ---------- */
+function openChat(){
+  if(!me){ pickMe(); return; }
+  state.chatOpen=true; ls.set("wg_chatseen_"+me,String(Date.now()));
+  $("#chatPanel").hidden=false; $("#chatFab").hidden=true; $("#chatFab").setAttribute("aria-expanded","true");
+  renderChatList(); const ta=$("#chatIn"); ta.value=chatDraft; updateBadges();
+  if(!/iPhone|iPad|Android/.test(navigator.userAgent)) ta.focus();
+}
+function closeChat(){ state.chatOpen=false; $("#chatPanel").hidden=true; $("#chatFab").hidden=false; $("#chatFab").setAttribute("aria-expanded","false"); updateBadges(); }
+function renderChatList(){ const box=$("#chatList"); if(!box) return; box.innerHTML=chatHTML(); scrollChat(); }
+function bindChat(){
+  $("#chatFab").onclick=openChat; $("#chatClose").onclick=closeChat;
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&state.chatOpen&&!$("#modal").innerHTML) closeChat(); });
+  $("#chatList").onclick=async e=>{ const b=e.target.closest("[data-delmsg]"); if(!b) return;
+    const m=state.chat.find(x=>x.id===b.dataset.delmsg); if(!m||m.who!==me) return;
+    if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent="Wirklich löschen?"; setTimeout(()=>{ if(b.isConnected){ b.classList.remove("armed"); b.textContent="Löschen"; } },3000); return; }
+    await Store.delChat(m.id); };
+  const ta=$("#chatIn");
+  $("#chatForm").onsubmit=e=>{ e.preventDefault(); sendChat(); };
+  ta.oninput=()=>{ chatDraft=ta.value; ta.style.height="auto"; ta.style.height=Math.min(ta.scrollHeight,110)+"px"; };
+  ta.onkeydown=e=>{ if(e.key==="Enter"&&!e.shiftKey&&!/iPhone|iPad|Android/.test(navigator.userAgent)){ e.preventDefault(); sendChat(); } };
+}
+
 /* ---------- Render ---------- */
 function render(){
   const meBtn=$("#meBtn"); meBtn.innerHTML = me ? `${avatar(me)}${esc(me)}` : `${avatar("?")}Wer bist du?`;
@@ -937,11 +1130,11 @@ function render(){
   updateBadges();
   const v=$("#view");
   if(!state.loaded){ v.innerHTML=`<div class="empty-state"><div class="big">📦</div><h3>Vorräte werden geladen…</h3></div>`; return; }
-  if(state.tab==="vorrat") v.innerHTML=renderVorrat();
+  if(state.tab==="home") v.innerHTML=renderHome();
+  else if(state.tab==="vorrat") v.innerHTML=renderVorrat();
   else if(state.tab==="liste") v.innerHTML=renderListe();
   else if(state.tab==="geld") v.innerHTML=renderGeld();
-  else if(state.tab==="kalender") v.innerHTML=renderKalender();
-  else { v.innerHTML=renderChat(); const ta=$("#chatIn"); ta.value=chatDraft; scrollChat(); updateBadges(); }
+  else v.innerHTML=renderKalender();
   bindView();
 }
 
@@ -978,7 +1171,8 @@ function renderGeld(){
   const now=new Date(); const mStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
   const month=P.filter(p=>p.at>=mStart);
   const stats=Object.fromEntries(PEOPLE.map(n=>[n,{count:0,sum:0,mcount:0}]));
-  P.forEach(p=>{ if(stats[p.who]){ stats[p.who].count++; stats[p.who].sum+=p.price||0; if(p.at>=mStart) stats[p.who].mcount++; } });
+  const M=money();
+  P.forEach(p=>{ if(p.kind!=="settle" && stats[p.who]){ stats[p.who].count++; stats[p.who].sum+=p.price||0; if(p.at>=mStart) stats[p.who].mcount++; } });
   const total=PEOPLE.reduce((s,n)=>s+stats[n].sum,0); const share=total/PEOPLE.length;
   const mc=PEOPLE.map(n=>stats[n].mcount); const max=Math.max(...mc), min=Math.min(...mc);
   const monthName=now.toLocaleDateString("de-DE",{month:"long"});
@@ -987,24 +1181,19 @@ function renderGeld(){
     return `<div class="person">${isTop?`<span class="crown" aria-label="Nummer 1 im Monat">👑</span>`:""}${avatar(n)}<b>${n}</b><div class="num">${s.mcount}×</div><small>gesamt ${eur(s.sum)}</small><span class="title">${isMessi?"Messi-Fan 🐐":"Ronaldo-Fan 😤"}</span></div>`}).join("")}</div>`;
   const bal = total>0 ? `<div class="section-h">Wer schuldet wem? (alles gedrittelt)</div><div class="card balance">
      <div><span>Gesamt ausgegeben</span><span class="money">${eur(total)}</span></div><div><span>Anteil pro Person</span><span class="money">${eur(share)}</span></div>
-     ${PEOPLE.map(n=>{const d=stats[n].sum-share; return `<div><span>${n}</span><span class="money ${d>=0.005?"pos":d<=-0.005?"neg":""}">${d>=0.005?"bekommt "+eur(d):d<=-0.005?"zahlt "+eur(-d):"ausgeglichen"}</span></div>`}).join("")}</div>` : "";
+     ${PEOPLE.map(n=>{const d=M.bal[n]; return `<div><span>${n}</span><span class="money ${d>=0.005?"pos":d<=-0.005?"neg":""}">${d>=0.005?"bekommt "+eur(d):d<=-0.005?"zahlt "+eur(-d):"ausgeglichen"}</span></div>`}).join("")}
+     ${M.tx.length?`<div style="border-top:1px solid var(--line);padding-top:8px;margin-top:2px"><b>So werdet ihr quitt</b></div>${M.tx.map(t=>`<div style="align-items:center"><span>${esc(t.from)} → ${esc(t.to)} <span class="money">${eur(t.amount)}</span></span><button class="btn sm ghost" data-settle="${t.from}|${t.to}|${t.amount}">Bezahlt</button></div>`).join("")}`:""}</div>` : "";
   const list = P.length ? `<div class="section-h">Alle Einkäufe</div><div class="list">${P.map(p=>`<div class="row">${avatar(p.who)}<div class="tx"><b>${esc(p.emoji||"🛍️")} ${esc(p.item)}</b><span>${esc(p.who)} · ${fdate(p.at)}${p.store?" · "+esc(p.store):""}</span></div><span class="money">${p.price==null?"–":eur(p.price)}</span>${p.receiptId?`<button class="iconbtn" style="box-shadow:none;background:var(--surface-2);width:34px;height:34px;font-size:15px" data-rcpt="${p.receiptId}" aria-label="Kassenbon ansehen">🧾</button>`:""}<button class="iconbtn" style="box-shadow:none;background:var(--surface-2);width:34px;height:34px;font-size:14px" data-delp="${p.id}" aria-label="Eintrag löschen">✕</button></div>`).join("")}</div>`
     : `<div class="empty-state"><div class="big">🧾</div><h3>Noch keine Einkäufe</h3><p>Wenn jemand in der Einkaufsliste auf „Gekauft“ tippt und den Preis einträgt, landet es hier.</p></div>`;
   return board+bal+`<button class="btn wide" data-scan style="margin-top:14px">🧾 Kassenbon scannen</button><button class="btn ghost wide" id="manual" style="margin-top:8px">＋ Einkauf eintragen</button>`+list;
 }
 
 function bindView(){
-  const cl=$("#chatList");
-  if(cl) cl.onclick=async e=>{ const b=e.target.closest("[data-delmsg]"); if(!b) return;
-    const m=state.chat.find(x=>x.id===b.dataset.delmsg); if(!m||m.who!==me) return;
-    if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent="Wirklich löschen?"; setTimeout(()=>{ if(b.isConnected){ b.classList.remove("armed"); b.textContent="Löschen"; } },3000); return; }
-    await Store.delChat(m.id); };
-  const cf=$("#chatForm");
-  if(cf){ const ta=$("#chatIn");
-    cf.onsubmit=e=>{ e.preventDefault(); sendChat(); };
-    ta.oninput=()=>{ chatDraft=ta.value; ta.style.height="auto"; ta.style.height=Math.min(ta.scrollHeight,110)+"px"; };
-    ta.onkeydown=e=>{ if(e.key==="Enter"&&!e.shiftKey&&!/iPhone|iPad|Android/.test(navigator.userAgent)){ e.preventDefault(); sendChat(); } };
-  }
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ state.tab=b.dataset.go; play("pop"); render(); scrollTo(0,0); });
+  document.querySelectorAll("[data-todo]").forEach(b=>b.onclick=()=>todoSheet(b.dataset.todo));
+  document.querySelectorAll("[data-todo-done]").forEach(b=>b.onclick=()=>toggleTodo(b.dataset.todoDone));
+  document.querySelectorAll("[data-settle]").forEach(b=>b.onclick=()=>{ const [f,t,a]=b.dataset.settle.split("|"); settleSheet(f,t,+a); });
+  const at=$("#addTodo"); if(at) at.onclick=()=>todoSheet(null);
   document.querySelectorAll("[data-id]").forEach(b=>b.onclick=e=>{ if(e.target.closest("[data-edit]")){ itemSheet(e.target.closest("[data-edit]").dataset.edit); return;} if(state.edit){ itemSheet(b.dataset.id); return;} cycle(b.dataset.id); });
   document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{ state.cat=b.dataset.cat; play("pop"); render(); });
   const te=document.querySelector("[data-toggle-edit]"); if(te) te.onclick=()=>{ state.edit=!state.edit; play("pop"); render(); };
@@ -1026,7 +1215,8 @@ document.querySelectorAll("nav.tabs [data-tab]").forEach(b=>b.onclick=()=>{ stat
 $("#meBtn").onclick=pickMe;
 $("#pushBtn").onclick=pushSheet;
 $("#soundBtn").onclick=()=>{ muted=!muted; ls.set("wg_muted",muted?"1":"0"); render(); if(!muted) play("bell"); };
-setInterval(()=>{ if(state.tab==="liste") render(); },60000);
+setInterval(()=>{ if(state.tab==="liste"||state.tab==="home") render(); },60000);
+bindChat();
 
 /* ---------- Passwort-Abfrage ---------- */
 async function sha256(t){ const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join(""); }
