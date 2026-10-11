@@ -146,6 +146,12 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);background:var(--surface-
 .field input,.field select{font:600 16px var(--f-body);padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
 .field-row{display:grid;grid-template-columns:90px 1fr;gap:10px}
 .actions{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.opts{display:flex;flex-direction:column;gap:2px;margin:6px 0 14px}
+.opt{display:flex;align-items:center;gap:10px;padding:10px 4px;border-radius:12px;cursor:pointer;font-size:15px}
+.opt input{width:22px;height:22px;margin:0;accent-color:var(--accent);flex:none}
+.opt span{width:24px;text-align:center;flex:none}
+.topic{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.topic code{flex:1;min-width:0;overflow-wrap:anywhere;background:var(--surface-2);border-radius:10px;padding:10px;font:13px/1.3 ui-monospace,Menlo,monospace}
 .actions .btn{flex:1}
 .names{display:grid;gap:10px;margin-top:6px}
 .names button{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:var(--surface-2);font:800 19px var(--f-display);text-align:left}
@@ -216,6 +222,7 @@ canvas#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:non
 <div class="wrap">
   <header class="top">
     <div class="brand"><h1>WG Vorrat</h1><p id="sub">Leon · Lucio · Yannick</p></div>
+    <button class="iconbtn" id="pushBtn" aria-label="Push-Nachrichten einstellen" aria-haspopup="dialog">🔔</button>
     <button class="iconbtn" id="soundBtn" aria-label="Ton an/aus">🔊</button>
     <button class="mechip" id="meBtn" aria-label="Person wechseln"></button>
   </header>
@@ -343,7 +350,7 @@ function confetti(){
 let toastT; function toast(msg){ const el=document.createElement("div"); el.className="toast"; el.textContent=msg; document.querySelectorAll(".toast").forEach(t=>t.remove()); document.body.appendChild(el); clearTimeout(toastT); toastT=setTimeout(()=>el.remove(),3200); }
 
 /* ---------- Store (shared db, or local fallback) ---------- */
-const state = { items:[], purchases:[], chat:[], bins:{}, away:[], calOff:0, loaded:false, shared:false, tab:"vorrat", cat:"Alle", edit:false };
+const state = { items:[], purchases:[], chat:[], bins:{}, away:[], prefs:{}, calOff:0, loaded:false, shared:false, tab:"vorrat", cat:"Alle", edit:false };
 let me = ls.get("wg_me"); if(!PEOPLE.includes(me)) me=null;
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
@@ -366,13 +373,14 @@ const Store = {
       db.collection("chat").orderBy("at","desc").limit(300).onSnapshot(snap=>{ onChat(snap.docs.map(d=>({id:d.id,...d.data()})).reverse()); }, ()=>{});
       db.collection("away").onSnapshot(snap=>{ state.away=snap.docs.map(d=>({id:d.id,...d.data()})); render(); }, ()=>{});
       db.collection("bins").onSnapshot(snap=>{ onBins(Object.fromEntries(snap.docs.map(d=>[d.id,d.data()])), snap.docChanges()); }, ()=>{});
+      db.collection("prefs").onSnapshot(snap=>{ state.prefs=Object.fromEntries(snap.docs.map(d=>[d.id,d.data()])); }, ()=>{});
     } else {
       showNotice(LOCAL_DEV ? "Lokaler Testmodus: Änderungen werden nur auf diesem Gerät gespeichert, keine Push-Nachrichten." : "Firebase ist noch nicht eingerichtet: Änderungen werden nur auf diesem Gerät gespeichert.");
       let saved=null; try{ saved=JSON.parse(ls.get("wg_local")||"null") }catch(e){}
-      state.purchases = saved?.purchases||[]; state.chat = saved?.chat||[]; state.bins = saved?.bins||{}; state.away = saved?.away||[]; onItems(saved?.items||[],[]);
+      state.purchases = saved?.purchases||[]; state.chat = saved?.chat||[]; state.bins = saved?.bins||{}; state.away = saved?.away||[]; state.prefs = saved?.prefs||{}; onItems(saved?.items||[],[]);
     }
   },
-  saveLocal(){ ls.set("wg_local",JSON.stringify({items:state.items,purchases:state.purchases,chat:state.chat,bins:state.bins,away:state.away})) },
+  saveLocal(){ ls.set("wg_local",JSON.stringify({items:state.items,purchases:state.purchases,chat:state.chat,bins:state.bins,away:state.away,prefs:state.prefs})) },
   async setItem(id,data){
     if(this.db){ try{ await this.db.doc("items/"+id).set(data) }catch(e){ writeErr(e) } }
     else { const i=state.items.findIndex(x=>x.id===id); const v={id,...data}; i<0?state.items.push(v):state.items[i]=v; this.saveLocal(); onItems(state.items,[]); }
@@ -422,17 +430,44 @@ const Store = {
     if(this.db){ try{ await this.db.doc("away/"+id).delete() }catch(e){ writeErr(e) } }
     else { state.away=state.away.filter(x=>x.id!==id); this.saveLocal(); render(); }
   },
+  async setPrefs(who,data){
+    state.prefs[who]=data;
+    if(this.db){ try{ await this.db.doc("prefs/"+who).set(data) }catch(e){ writeErr(e) } }
+    else this.saveLocal();
+  },
   async delPurchase(id){
     if(this.db){ try{ await this.db.doc("purchases/"+id).delete() }catch(e){ writeErr(e) } }
     else { state.purchases=state.purchases.filter(x=>x.id!==id); this.saveLocal(); render(); }
   }
 };
 function writeErr(e){ console.error(e); toast(e?.code==="permission-denied" ? "Keine Schreibrechte. Prüfe die Firestore-Regeln." : "Speichern hat nicht geklappt. Bist du online?"); }
-/* Push aufs Handy über ntfy */
-function notify(title,message,tags){
+/* Push aufs Handy über ntfy: jede Person hat ein eigenes Thema und stellt in der App ein,
+   wofür sie Push bekommt (prefs/<Name> in der Datenbank). Eigene Aktionen schicken einem selbst nichts. */
+const PUSH_EVENTS = [
+  ["leer","Etwas ist leer","🚨",true], ["fastleer","Etwas ist fast leer","⚠️",false], ["kauf","Jemand hat eingekauft","🎉",true],
+  ["muell","Müll ist voll","🗑️",true], ["kalender","Jemand ist nicht da (Kalender)","📅",false], ["chat","Neue Chat-Nachricht","💬",true] ];
+const pushTopic = p => `${NTFY_TOPIC}-${p.toLowerCase()}`;
+const wantsPush = (p,ev) => { const d=PUSH_EVENTS.find(x=>x[0]===ev); return !!d && (state.prefs[p]?.[ev] ?? d[3]); };
+function sendPush(ev,title,message,tags){
   if(!NTFY_TOPIC || LOCAL_DEV) return;
-  try{ fetch("https://ntfy.sh/",{method:"POST",body:JSON.stringify({topic:NTFY_TOPIC,title,message,tags:[tags],priority:tags==="rotating_light"?4:3})}).catch(()=>{}); }catch(e){}
+  for(const p of PEOPLE){
+    if(p===me || !wantsPush(p,ev)) continue;
+    try{ fetch("https://ntfy.sh/",{method:"POST",keepalive:true,body:JSON.stringify({topic:pushTopic(p),title,message,tags:[tags],priority:tags==="rotating_light"?4:3})}).catch(()=>{}); }catch(e){}
+  }
 }
+/* Gegen Vertippen: Status-Meldungen gehen erst nach kurzer Wartezeit raus.
+   Wer in der Zeit weiter- oder zurücktippt, verschickt nur den Endstand oder gar nichts. */
+const PUSH_DELAY = 20000, pendingPush = new Map();
+function notifyLater(key,ev,title,message,tags){
+  cancelPush(key);
+  const send=()=>{ pendingPush.delete(key); sendPush(ev,title,message,tags); };
+  pendingPush.set(key,{send,t:setTimeout(send,PUSH_DELAY)});
+}
+function cancelPush(key){ const x=pendingPush.get(key); if(x){ clearTimeout(x.t); pendingPush.delete(key); } }
+/* App wird verlassen: Wartende sofort verschicken, sonst gehen sie verloren */
+function flushPush(){ for(const x of [...pendingPush.values()]){ clearTimeout(x.t); x.send(); } }
+addEventListener("pagehide",flushPush);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") flushPush(); });
 function showNotice(t){ $("#notice").innerHTML=`<div class="notice">${esc(t)}</div>`; }
 
 /* ---------- Chat ---------- */
@@ -470,7 +505,7 @@ async function sendChat(){
   const ta=$("#chatIn"); const text=ta.value.trim(); if(!text) return;
   ta.value=""; chatDraft=""; ta.style.height="";
   const ok=await Store.addChat({who:me,text,at:Date.now()});
-  if(ok){ play(); notify(`💬 ${me}`, text, "speech_balloon"); }
+  if(ok){ play(); sendPush("chat", `💬 ${me}`, text, "speech_balloon"); }
   else { ta.value=text; chatDraft=text; }
 }
 function updateBadges(){
@@ -533,7 +568,8 @@ async function cycle(id){
   const {id:_, ...rest}=it;
   const data={...rest,status,by:me,at:Date.now()}; delete data.boughtBy;
   play(status==="empty"?"sad":status==="low"?"nervous":"pop");
-  if(status!=="full"){ const q=quip(it.name,status); toast(q); notify(`${it.emoji} ${it.name} ist ${ST_LABEL[status].toLowerCase()} (${me})`, q, status==="empty"?"rotating_light":"warning"); }
+  cancelPush("item:"+id);
+  if(status!=="full"){ const q=quip(it.name,status); toast(q); notifyLater("item:"+id, status==="empty"?"leer":"fastleer", `${it.emoji} ${it.name} ist ${ST_LABEL[status].toLowerCase()} (${me})`, q, status==="empty"?"rotating_light":"warning"); }
   await Store.setItem(id,data);
   const el=document.querySelector(`[data-id="${id}"]`); el?.classList.add("bump");
 }
@@ -554,8 +590,8 @@ async function toggleBin(id){
   if(!me){ pickMe(); return; }
   const [,name,em]=b, full=state.bins[id]?.status==="full";
   play();
-  if(full) toast(`${me} hat ${name} rausgebracht 🦸`);
-  else { toast(`${em} ${name} ist voll. Wer bringt's raus?`); notify(`${em} ${name} ist voll (${me})`, "Wer bringt's raus?", "wastebasket"); }
+  if(full){ cancelPush("bin:"+id); toast(`${me} hat ${name} rausgebracht 🦸`); }
+  else { toast(`${em} ${name} ist voll. Wer bringt's raus?`); notifyLater("bin:"+id, "muell", `${em} ${name} ist voll (${me})`, "Wer bringt's raus?", "wastebasket"); }
   await Store.setBin(id,{status:full?"ok":"full",by:me,at:Date.now()});
 }
 function binsHTML(){
@@ -583,7 +619,7 @@ function buySheet(id){
     const it = fixed || state.items.find(i=>i.id===$("#bitem").value);
     if(!it){ closeModal(); return; }
     closeModal(); play("kauf"); confetti(); toast(pick(HERO).replace("{n}",who)+` (${it.name} ist wieder voll)`);
-    notify(`${it.emoji} ${it.name} ist wieder voll`, `${who} hat eingekauft${price!=null?" ("+eur(price)+")":""}. Held des Tages! 🦸`, "tada");
+    cancelPush("item:"+it.id); sendPush("kauf", `${it.emoji} ${it.name} ist wieder voll`, `${who} hat eingekauft${price!=null?" ("+eur(price)+")":""}. Held des Tages! 🦸`, "tada");
     const {id:_,...rest}=it; await Store.setItem(it.id,{...rest,status:"full",by:who,boughtBy:who,at:Date.now()});
     await Store.addPurchase({item:it.name,itemId:it.id,emoji:it.emoji,who,price,at:Date.now()});
   };
@@ -664,14 +700,15 @@ function awaySheet(id,day){
     <div class="actions"><button class="btn" id="aok">Speichern</button>${a?`<button class="btn danger" id="adel">Löschen</button>`:""}<button class="btn ghost" id="ax">Abbrechen</button></div></div>`);
   $("#ax").onclick=closeModal;
   $("#afrom").onchange=()=>{ if($("#ato").value<$("#afrom").value) $("#ato").value=$("#afrom").value; };
-  if(a){ let armed=false; $("#adel").onclick=async()=>{ if(!armed){ armed=true; $("#adel").textContent="Wirklich löschen?"; return;} closeModal(); play("trash"); await Store.delAway(a.id); toast("Gelöscht"); }; }
+  if(a){ let armed=false; $("#adel").onclick=async()=>{ if(!armed){ armed=true; $("#adel").textContent="Wirklich löschen?"; return;} closeModal(); play("trash"); cancelPush("away:"+a.id); await Store.delAway(a.id); toast("Gelöscht"); }; }
   $("#aok").onclick=async()=>{
     const who=$("#awho").value, from=$("#afrom").value, to=$("#ato").value, note=$("#anote").value.trim();
     if(!from){ $("#afrom").focus(); return; } if(!to||to<from){ $("#ato").focus(); toast("„Bis“ muss nach „Von“ liegen."); return; }
     const r=awayRange({from,to});
     closeModal(); play("pop"); toast(`${who} ist nicht da: ${r}`);
-    if(!a) notify(`📅 ${who} ist nicht da`, `${r}${note?" · "+note:""}`, "date");
-    await Store.setAway(a?.id||uid(),{who,from,to,note,by:me,at:Date.now()});
+    const aid=a?.id||uid();
+    if(!a) notifyLater("away:"+aid, "kalender", `📅 ${who} ist nicht da`, `${r}${note?" · "+note:""}`, "date");
+    await Store.setAway(aid,{who,from,to,note,by:me,at:Date.now()});
   };
 }
 
@@ -849,7 +886,7 @@ function reviewReceipt(rc){
     const rid=await Store.addReceipt({store,date:at,who,by:me,at:Date.now(),img:rc.img,ocrTotal:rc.total,total:Math.round(total*100)/100,
       lines:items.map(x=>({name:x.name,price:x.price,itemId:x.it?.id||null,item:x.it?.name||null}))});
     closeModal(); play("kauf"); confetti(); toast(pick(HERO).replace("{n}",who)+` (${items.length} Artikel vom Bon)`);
-    notify(`🧾 ${who} war einkaufen${store?" bei "+store:""}`, `${items.map(x=>x.it?x.it.emoji+" "+x.it.name:x.name).join(", ")} · ${eur(total)}. Held des Tages! 🦸`, "tada");
+    items.forEach(x=>x.it&&cancelPush("item:"+x.it.id)); sendPush("kauf", `🧾 ${who} war einkaufen${store?" bei "+store:""}`, `${items.map(x=>x.it?x.it.emoji+" "+x.it.name:x.name).join(", ")} · ${eur(total)}. Held des Tages! 🦸`, "tada");
     const done=new Set();
     for(const x of items){
       if(x.it && !done.has(x.it.id)){ done.add(x.it.id); const {id:_,...rest}=x.it; await Store.setItem(x.it.id,{...rest,status:"full",by:who,boughtBy:who,at:Date.now()}); }
@@ -872,6 +909,24 @@ async function receiptSheet(id){
     ${r.ocrTotal!=null?`<div><span>Summe laut Bon</span><span class="money">${eur(r.ocrTotal)}</span></div>`:""}</div>
     <div class="actions"><button class="btn ghost" id="rvx">Schließen</button></div>`;
   $("#rvx").onclick=closeModal;
+}
+
+/* ---------- Push-Einstellungen (pro Person, für alle Geräte) ---------- */
+function pushSheet(){
+  if(!me){ pickMe(); return; }
+  const topic=pushTopic(me);
+  openModal(`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pusht"><h2 id="pusht">Push-Nachrichten</h2>
+    <p class="sub">Wofür bekommst du, ${esc(me)}, eine Nachricht aufs Handy? Für deine eigenen Aktionen kommt nie eine.</p>
+    <div class="opts">${PUSH_EVENTS.map(([k,label,em])=>`<label class="opt"><input type="checkbox" data-push="${k}" ${wantsPush(me,k)?"checked":""}><span>${em}</span>${esc(label)}</label>`).join("")}</div>
+    <p class="hint" style="margin:0 2px 6px">Damit es ankommt, in der ntfy-App einmal dieses Thema abonnieren (Server ntfy.sh):</p>
+    <div class="topic"><code>${esc(topic)}</code><button class="btn ghost" id="pcopy">Kopieren</button></div>
+    <div class="actions"><button class="btn" id="px">Fertig</button></div></div>`);
+  document.querySelectorAll("[data-push]").forEach(c=>c.onchange=()=>{
+    const prefs=Object.fromEntries(PUSH_EVENTS.map(([k])=>[k,!!document.querySelector(`[data-push="${k}"]`)?.checked]));
+    Store.setPrefs(me,prefs);
+  });
+  $("#pcopy").onclick=async()=>{ try{ await navigator.clipboard.writeText(topic); toast("Thema kopiert"); }catch(e){ toast(topic); } };
+  $("#px").onclick=closeModal;
 }
 
 /* ---------- Render ---------- */
@@ -969,6 +1024,7 @@ function bindView(){
 
 document.querySelectorAll("nav.tabs [data-tab]").forEach(b=>b.onclick=()=>{ state.tab=b.dataset.tab; state.edit=false; state.calOff=0; play("pop"); render(); scrollTo(0,0); });
 $("#meBtn").onclick=pickMe;
+$("#pushBtn").onclick=pushSheet;
 $("#soundBtn").onclick=()=>{ muted=!muted; ls.set("wg_muted",muted?"1":"0"); render(); if(!muted) play("bell"); };
 setInterval(()=>{ if(state.tab==="liste") render(); },60000);
 
