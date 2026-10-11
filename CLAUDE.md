@@ -10,8 +10,33 @@ Stolperfallen) und im selben Commit mitschicken. Kurz halten, nur was man nicht 
 
 ## Aufbau
 
-- Alles steckt in **einer Datei**: `index.html` (HTML + CSS + JS inline). Kein Build, kein Framework, kein npm.
-- `manifest.json`, `icon-*.png`, `apple-touch-icon.png`: App-Icon/PWA. `kauf.mp3`: Sound beim Einkauf.
+Statische Seite ohne Build, ohne Framework, ohne npm. GitHub Pages liefert die Dateien direkt aus.
+
+```
+index.html          HTML-Gerüst + <script>-Tags (Reihenfolge ist wichtig, s. u.)
+manifest.json       PWA-Manifest
+css/app.css         alle Styles (Farben als Tokens auf :root, Dark Mode per prefers-color-scheme)
+js/config.js        Firebase-Config, WG_ID, NTFY_TOPIC, PASS_HASH, LOCAL_DEV
+js/util.js          Konstanten (PEOPLE, CATS, …) und Helfer ($, esc, ls, eur, ago, isoDay, toNum, avatar)
+js/fx.js            Sprüche, Sounds (Web Audio + assets/kauf.mp3), Konfetti, Toast
+js/store.js         state, me, Store (Firestore oder localStorage-Fallback)
+js/push.js          ntfy-Push + Push-Einstellungsdialog
+js/ui.js            openModal/closeModal, pickMe
+js/chat.js          Chat-Logik + Pop-up
+js/muell.js         Müll-Status
+js/vorrat.js        Vorrat, Einkaufsliste, Kaufen, Artikel bearbeiten, Willkommens-Popup
+js/kalender.js      Abwesenheiten
+js/receipt.js       Kassenbon-Scan (Tesseract)
+js/geld.js          Ausgaben, Bilanz (money()), Ausgleich
+js/home.js          Home-Reiter, eigene To-dos, automatische To-dos
+js/main.js          render(), bindView(), Tab-Leiste, Passwort-Gate, App-Start — muss als letztes laden
+assets/icons/       App-Icons, assets/kauf.mp3 = Kauf-Sound
+```
+
+- Die JS-Dateien sind **klassische Skripte, keine Module**: Alle teilen sich den globalen Scope, top-level `const`/`let`
+  sind dateiübergreifend sichtbar. Funktionen dürfen sich gegenseitig beliebig aufrufen, aber **Code, der beim Laden
+  sofort läuft**, darf nur auf Dateien zugreifen, die vorher geladen wurden. Startcode gehört nach `main.js`.
+- Neue Datei → `<script src>` in `index.html` vor `main.js` eintragen.
 - Externe Skripte nur per CDN: Firebase compat SDK 10.12.2 (gstatic), Tesseract.js 5.1.1 (jsDelivr, lazy beim Bon-Scan).
 - Rendering: `render()` baut `#view` per Template-Strings neu, `bindView()` hängt danach die Handler über
   `data-*`-Attribute an. Modale Dialoge über `openModal(html)` / `closeModal()`. Nutzertext immer mit `esc()`.
@@ -71,3 +96,5 @@ arbeiten parallel an derselben `index.html`, also vor dem Mergen `origin/main` h
   Fallback mit Binarisierung. Liefert bei echten Fotos einen Entwurf mit Fehlern, darum gibt es immer den Prüf-Dialog
   (mit „Erkannter Text“ zum Debuggen). Bon-Wörter → Vorrat-Artikel über `ALIAS`.
 - iOS: Eingabefelder brauchen ≥ 16 px Schrift, sonst zoomt Safari.
+- GitHub Pages cacht Dateien ca. 10 Minuten. Direkt nach einem Deploy kann ein Gerät kurz eine Mischung aus alter und
+  neuer Version laden; im Zweifel App schließen und neu öffnen.
