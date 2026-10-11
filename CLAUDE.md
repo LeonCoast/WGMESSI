@@ -89,11 +89,9 @@ GitHub Pages aus `main` (Repo `LeonCoast/WGMESSI`) → https://leoncoast.github.
 **Jeder Push auf `main` ist sofort live** (~30–60 s). Feature-Arbeit auf Branches (z. B. `dev/features`), Leon und Lucio
 arbeiten parallel an derselben `index.html`, also vor dem Mergen `origin/main` holen.
 
-## Offene Issues
+## Issues
 
-Liegen als Markdown unter `docs/issues/` (kein GitHub-CLI im Einsatz). Erledigte Issues dort auf „erledigt“ setzen.
-
-- `docs/issues/accounts-login.md`: eigene Accounts mit Firebase Auth statt gemeinsamem Passwort (Leon)
+Offene Aufgaben und Ideen liegen als **GitHub-Issues** in `LeonCoast/WGMESSI` (`gh issue list -R LeonCoast/WGMESSI`).
 
 ## Stolperfallen
 
