@@ -64,7 +64,8 @@ neue Sammlungen brauchen also keine Regeländerung.
 | `prefs` | Push-Einstellungen pro Person (Doc-ID = Name) |
 
 Geld-Logik steckt in `money()`: Einkäufe werden gedrittelt, `settle`-Einträge verschieben nur zwischen zwei Personen
-und zählen nicht als Einkauf (Wertung „Wer kauft ein?“). Automatische To-dos (`autoTodos()`) werden nicht gespeichert,
+und zählen nicht als Einkauf (Wertung „Wer kauft ein?“). Die Wertung und der Einkaufs-Vorschlag auf Home zählen
+**Artikel, nicht Einkäufe**: Ein Bon mit 5 Zeilen zählt 5×. Das ist so gewollt, nicht „reparieren“. Automatische To-dos (`autoTodos()`) werden nicht gespeichert,
 sondern jedes Mal aus dem Stand berechnet.
 
 ## Push
