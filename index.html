@@ -106,11 +106,31 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backgroun
 .card{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow)}
 .balance{display:flex;flex-direction:column;gap:6px;font-size:14px}
 .balance div{display:flex;justify-content:space-between;gap:10px}
+.bins{display:flex;gap:8px;margin:0 0 14px}
+.bin{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;background:var(--surface);box-shadow:var(--shadow);border:2px solid transparent;text-align:left;font-weight:700;font-size:14px;line-height:1.2}
+.bin .em{font-size:24px;flex:none}
+.bin small{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ok);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bin.full{background:var(--empty-bg);border-color:var(--empty)} .bin.full small{color:var(--empty)}
+.cal-h{display:flex;align-items:center;gap:8px;margin:4px 0 10px}
+.cal-h h2{flex:1;min-width:0;margin:0;font:800 22px/1.1 var(--f-display)}
+.cal-h .iconbtn{font-size:20px;font-weight:800}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .wd{text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:2px 0}
+.day{position:relative;min-width:0;min-height:56px;border-radius:10px;background:var(--surface);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:3px;padding:5px 3px 4px 5px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.day.past{opacity:.55}
+.day.today .dn{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 6px}
+.day.multi{box-shadow:inset 0 0 0 2px var(--ink)}
+.day .cnt{position:absolute;top:5px;right:4px;font-size:11px;line-height:16px;min-width:16px;border-radius:8px;background:var(--ink);color:var(--bg);text-align:center}
+.day .bars{display:flex;flex-direction:column;gap:2px;width:100%}
+.day .bars i{display:block;height:5px;border-radius:3px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 2px 0;font-size:13px;font-weight:700;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:16px;height:6px;border-radius:3px}
 .pos{color:var(--ok)} .neg{color:var(--empty)}
 
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
 nav.tabs .in{display:flex;gap:4px;width:100%;max-width:520px}
-nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:12px;font-size:12px;font-weight:700;color:var(--muted);position:relative}
+nav.tabs button{flex:1;min-width:0;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:12px;font-size:12px;font-weight:700;color:var(--muted);position:relative}
 nav.tabs button .ic{font-size:22px}
 nav.tabs button[aria-selected="true"]{color:var(--ink);background:var(--surface-2)}
 .badge{position:absolute;top:2px;right:calc(50% - 26px);min-width:18px;height:18px;border-radius:9px;background:var(--empty);color:#fff;font-size:11px;display:grid;place-items:center;padding:0 5px}
@@ -207,6 +227,7 @@ canvas#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:non
   <button role="tab" data-tab="vorrat" aria-selected="true"><span class="ic">🏠</span>Vorrat</button>
   <button role="tab" data-tab="liste" aria-selected="false"><span class="ic">🛒</span>Einkaufsliste<span class="badge" id="listBadge" hidden></span></button>
   <button role="tab" data-tab="geld" aria-selected="false"><span class="ic">💶</span>Ausgaben</button>
+  <button role="tab" data-tab="kalender" aria-selected="false"><span class="ic">📅</span>Kalender</button>
   <button role="tab" data-tab="chat" aria-selected="false"><span class="ic">💬</span>Chat<span class="badge" id="chatBadge" hidden></span></button>
 </div></nav>
 <div id="modal"></div>
@@ -322,7 +343,7 @@ function confetti(){
 let toastT; function toast(msg){ const el=document.createElement("div"); el.className="toast"; el.textContent=msg; document.querySelectorAll(".toast").forEach(t=>t.remove()); document.body.appendChild(el); clearTimeout(toastT); toastT=setTimeout(()=>el.remove(),3200); }
 
 /* ---------- Store (shared db, or local fallback) ---------- */
-const state = { items:[], purchases:[], chat:[], loaded:false, shared:false, tab:"vorrat", cat:"Alle", edit:false };
+const state = { items:[], purchases:[], chat:[], bins:{}, away:[], calOff:0, loaded:false, shared:false, tab:"vorrat", cat:"Alle", edit:false };
 let me = ls.get("wg_me"); if(!PEOPLE.includes(me)) me=null;
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
@@ -343,13 +364,15 @@ const Store = {
       db.collection("items").onSnapshot(snap=>{ onItems(snap.docs.map(d=>({id:d.id,...d.data()})), snap.docChanges()); }, e=>showNotice("Keine Verbindung zur Datenbank. Prüfe die Firestore-Regeln oder lade neu."));
       db.collection("purchases").onSnapshot(snap=>{ state.purchases=snap.docs.map(d=>({id:d.id,...d.data()})); render(); }, ()=>{});
       db.collection("chat").orderBy("at","desc").limit(300).onSnapshot(snap=>{ onChat(snap.docs.map(d=>({id:d.id,...d.data()})).reverse()); }, ()=>{});
+      db.collection("away").onSnapshot(snap=>{ state.away=snap.docs.map(d=>({id:d.id,...d.data()})); render(); }, ()=>{});
+      db.collection("bins").onSnapshot(snap=>{ onBins(Object.fromEntries(snap.docs.map(d=>[d.id,d.data()])), snap.docChanges()); }, ()=>{});
     } else {
       showNotice(LOCAL_DEV ? "Lokaler Testmodus: Änderungen werden nur auf diesem Gerät gespeichert, keine Push-Nachrichten." : "Firebase ist noch nicht eingerichtet: Änderungen werden nur auf diesem Gerät gespeichert.");
       let saved=null; try{ saved=JSON.parse(ls.get("wg_local")||"null") }catch(e){}
-      state.purchases = saved?.purchases||[]; state.chat = saved?.chat||[]; onItems(saved?.items||[],[]);
+      state.purchases = saved?.purchases||[]; state.chat = saved?.chat||[]; state.bins = saved?.bins||{}; state.away = saved?.away||[]; onItems(saved?.items||[],[]);
     }
   },
-  saveLocal(){ ls.set("wg_local",JSON.stringify({items:state.items,purchases:state.purchases,chat:state.chat})) },
+  saveLocal(){ ls.set("wg_local",JSON.stringify({items:state.items,purchases:state.purchases,chat:state.chat,bins:state.bins,away:state.away})) },
   async setItem(id,data){
     if(this.db){ try{ await this.db.doc("items/"+id).set(data) }catch(e){ writeErr(e) } }
     else { const i=state.items.findIndex(x=>x.id===id); const v={id,...data}; i<0?state.items.push(v):state.items[i]=v; this.saveLocal(); onItems(state.items,[]); }
@@ -386,6 +409,18 @@ const Store = {
     if(this.receipts[id]) return this.receipts[id];
     if(this.db){ try{ const d=await this.db.doc("receipts/"+id).get(); return this.receipts[id]=d.exists?d.data():null }catch(e){ console.error(e); return null } }
     try{ return JSON.parse(ls.get("wg_receipts")||"{}")[id]||null }catch(e){ return null }
+  },
+  async setBin(id,data){
+    if(this.db){ try{ await this.db.doc("bins/"+id).set(data) }catch(e){ writeErr(e) } }
+    else { state.bins[id]=data; this.saveLocal(); render(); }
+  },
+  async setAway(id,data){
+    if(this.db){ try{ await this.db.doc("away/"+id).set(data) }catch(e){ writeErr(e) } }
+    else { const i=state.away.findIndex(x=>x.id===id); const v={id,...data}; i<0?state.away.push(v):state.away[i]=v; this.saveLocal(); render(); }
+  },
+  async delAway(id){
+    if(this.db){ try{ await this.db.doc("away/"+id).delete() }catch(e){ writeErr(e) } }
+    else { state.away=state.away.filter(x=>x.id!==id); this.saveLocal(); render(); }
   },
   async delPurchase(id){
     if(this.db){ try{ await this.db.doc("purchases/"+id).delete() }catch(e){ writeErr(e) } }
@@ -503,6 +538,31 @@ async function cycle(id){
   const el=document.querySelector(`[data-id="${id}"]`); el?.classList.add("bump");
 }
 
+/* ---------- Müll: voll / rausgebracht ---------- */
+const BINS = [["rest","Restmüll","🗑️"],["papier","Papier","📦"]];
+function onBins(bins,changes){
+  state.bins=bins;
+  for(const ch of changes){
+    if(ch.type!=="modified"&&ch.type!=="added") continue;
+    const d=ch.doc.data(), b=BINS.find(x=>x[0]===ch.doc.id); if(!b||!d||d.by===me||!me||Date.now()-(d.at||0)>60000) continue;
+    toast(d.status==="full"?`${d.by}: ${b[2]} ${b[1]} ist voll`:`${d.by} hat ${b[1]} rausgebracht 🦸`); play();
+  }
+  render();
+}
+async function toggleBin(id){
+  const b=BINS.find(x=>x[0]===id); if(!b) return;
+  if(!me){ pickMe(); return; }
+  const [,name,em]=b, full=state.bins[id]?.status==="full";
+  play();
+  if(full) toast(`${me} hat ${name} rausgebracht 🦸`);
+  else { toast(`${em} ${name} ist voll. Wer bringt's raus?`); notify(`${em} ${name} ist voll (${me})`, "Wer bringt's raus?", "wastebasket"); }
+  await Store.setBin(id,{status:full?"ok":"full",by:me,at:Date.now()});
+}
+function binsHTML(){
+  return `<div class="bins">${BINS.map(([id,name,em])=>{ const b=state.bins[id]||{}, full=b.status==="full";
+    return `<button class="bin ${full?"full":""}" data-bin="${id}" aria-label="${name}: ${full?"voll":"okay"}. Tippen zum Ändern"><span class="em">${em}</span><span>${name}<small>${full?`Voll · ${esc(b.by)}`:"Okay"}</small></span></button>`; }).join("")}</div>`;
+}
+
 function buySheet(id){
   if(!me){ pickMe(); return; }
   if(!state.items.length){ toast("Leg zuerst Artikel im Vorrat an."); return; }
@@ -564,6 +624,55 @@ async function seedStarter(){
   if(!me){ pickMe(); return; }
   let o=0; for(const [name,emoji,cat] of STARTER){ await Store.setItem(uid(),{name,emoji,cat,status:"full",order:++o,by:me,at:Date.now()}); }
   play("fanfare"); confetti();
+}
+
+/* ---------- Kalender: wer ist wann nicht in der WG ---------- */
+const fday = iso => new Date(iso+"T12:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
+const awayOn = (who,iso) => state.away.some(a=>a.who===who && a.from<=iso && iso<=a.to);
+function awayRange(a){ return a.from===a.to ? fday(a.from) : `${fday(a.from)} – ${fday(a.to)}`; }
+
+function renderKalender(){
+  const now=new Date(), first=new Date(now.getFullYear(),now.getMonth()+state.calOff,1);
+  const y=first.getFullYear(), m=first.getMonth(), days=new Date(y,m+1,0).getDate(), lead=(first.getDay()+6)%7;
+  const today=isoDay(Date.now()), mFrom=isoDay(first.getTime()), mTo=isoDay(new Date(y,m,days).getTime());
+  const title=first.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+  const cell=d=>{ const iso=isoDay(new Date(y,m,d).getTime()), A=PEOPLE.filter(p=>awayOn(p,iso));
+    return `<button class="day ${iso<today?"past":""} ${iso===today?"today":""} ${A.length>1?"multi":""}" data-day="${iso}" aria-label="${d}. ${esc(title)}: ${A.length?esc(A.join(", "))+" nicht da":"alle da"}">
+      <span class="dn">${d}</span>${A.length>1?`<span class="cnt" aria-hidden="true">${A.length}</span>`:""}
+      <span class="bars">${PEOPLE.map(p=>`<i style="${A.includes(p)?`background:${COLORS[p]}`:""}"></i>`).join("")}</span></button>`; };
+  const list=state.away.filter(a=>a.to>=mFrom&&a.from<=mTo).sort((a,b)=>a.from.localeCompare(b.from)||PEOPLE.indexOf(a.who)-PEOPLE.indexOf(b.who));
+  return `<div class="cal-h"><button class="iconbtn" data-cal="-1" aria-label="Voriger Monat">‹</button><h2>${esc(title)}</h2>
+      ${state.calOff?`<button class="btn ghost" data-cal="0">Heute</button>`:""}<button class="iconbtn" data-cal="1" aria-label="Nächster Monat">›</button></div>
+    <div class="cal">${["Mo","Di","Mi","Do","Fr","Sa","So"].map(w=>`<div class="wd">${w}</div>`).join("")}${"<div></div>".repeat(lead)}${Array.from({length:days},(_,i)=>cell(i+1)).join("")}</div>
+    <div class="legend">${PEOPLE.map(p=>`<span><i style="background:${COLORS[p]}"></i>${p}</span>`).join("")}</div>
+    <p class="hint">Tippe auf einen Tag, um einzutragen, wer nicht da ist. Umrandete Tage: mehrere sind weg.</p>
+    <div class="section-h">Nicht da im ${esc(first.toLocaleDateString("de-DE",{month:"long"}))}</div>
+    ${list.length?`<div class="list">${list.map(a=>`<button class="row" style="text-align:left;width:100%" data-away="${a.id}">${avatar(a.who)}<div class="tx"><b>${esc(a.who)}</b><span>${esc(awayRange(a))}${a.note?" · "+esc(a.note):""}</span></div><span aria-hidden="true">✏️</span></button>`).join("")}</div>`
+      :`<p class="hint" style="margin-top:0">Diesen Monat sind alle da. 🏠</p>`}
+    <button class="btn wide" id="addAway" style="margin-top:12px">＋ Abwesenheit eintragen</button>`;
+}
+
+function awaySheet(id,day){
+  if(!me){ pickMe(); return; }
+  const a=id?state.away.find(x=>x.id===id):null, d=day||isoDay(Date.now());
+  openModal(`<div class="sheet" role="dialog" aria-modal="true"><h2>${a?"Abwesenheit ändern":"Wer ist nicht da?"}</h2>
+    <p class="sub">${day?esc(fday(day))+". ":""}Die anderen sehen es im Kalender.</p>
+    <div class="field"><label for="awho">Wer</label><select id="awho">${PEOPLE.map(p=>`<option ${p===(a?.who||me)?"selected":""}>${p}</option>`).join("")}</select></div>
+    <div class="field-row" style="grid-template-columns:1fr 1fr"><div class="field"><label for="afrom">Von</label><input id="afrom" type="date" value="${a?.from||d}"></div>
+    <div class="field"><label for="ato">Bis</label><input id="ato" type="date" value="${a?.to||d}"></div></div>
+    <div class="field"><label for="anote">Notiz (optional)</label><input id="anote" value="${esc(a?.note||"")}" placeholder="z. B. bei den Eltern" maxlength="40"></div>
+    <div class="actions"><button class="btn" id="aok">Speichern</button>${a?`<button class="btn danger" id="adel">Löschen</button>`:""}<button class="btn ghost" id="ax">Abbrechen</button></div></div>`);
+  $("#ax").onclick=closeModal;
+  $("#afrom").onchange=()=>{ if($("#ato").value<$("#afrom").value) $("#ato").value=$("#afrom").value; };
+  if(a){ let armed=false; $("#adel").onclick=async()=>{ if(!armed){ armed=true; $("#adel").textContent="Wirklich löschen?"; return;} closeModal(); play("trash"); await Store.delAway(a.id); toast("Gelöscht"); }; }
+  $("#aok").onclick=async()=>{
+    const who=$("#awho").value, from=$("#afrom").value, to=$("#ato").value, note=$("#anote").value.trim();
+    if(!from){ $("#afrom").focus(); return; } if(!to||to<from){ $("#ato").focus(); toast("„Bis“ muss nach „Von“ liegen."); return; }
+    const r=awayRange({from,to});
+    closeModal(); play("pop"); toast(`${who} ist nicht da: ${r}`);
+    if(!a) notify(`📅 ${who} ist nicht da`, `${r}${note?" · "+note:""}`, "date");
+    await Store.setAway(a?.id||uid(),{who,from,to,note,by:me,at:Date.now()});
+  };
 }
 
 /* ---------- Kassenbon scannen ---------- */
@@ -776,13 +885,14 @@ function render(){
   if(state.tab==="vorrat") v.innerHTML=renderVorrat();
   else if(state.tab==="liste") v.innerHTML=renderListe();
   else if(state.tab==="geld") v.innerHTML=renderGeld();
+  else if(state.tab==="kalender") v.innerHTML=renderKalender();
   else { v.innerHTML=renderChat(); const ta=$("#chatIn"); ta.value=chatDraft; scrollChat(); updateBadges(); }
   bindView();
 }
 
 function renderVorrat(){
   const items=state.items;
-  if(!items.length) return `<div class="empty-state"><div class="big">🧺</div><h3>Noch keine Vorräte</h3><p>Leg mit den üblichen WG-Basics los oder füg eigene Artikel hinzu.</p><div class="actions" style="max-width:340px;margin:16px auto 0"><button class="btn" id="seed">Startartikel anlegen</button><button class="btn ghost" id="addNew">Eigener Artikel</button></div></div>`;
+  if(!items.length) return binsHTML()+`<div class="empty-state"><div class="big">🧺</div><h3>Noch keine Vorräte</h3><p>Leg mit den üblichen WG-Basics los oder füg eigene Artikel hinzu.</p><div class="actions" style="max-width:340px;margin:16px auto 0"><button class="btn" id="seed">Startartikel anlegen</button><button class="btn ghost" id="addNew">Eigener Artikel</button></div></div>`;
   const c={full:0,low:0,empty:0}; items.forEach(i=>c[i.status||"full"]++);
   const cats=["Alle",...CATS.filter(k=>items.some(i=>i.cat===k))];
   if(!cats.includes(state.cat)) state.cat="Alle";
@@ -791,7 +901,7 @@ function renderVorrat(){
   const tile=i=>`<button class="tile ${i.status||"full"}" data-id="${i.id}" aria-label="${esc(i.name)}: ${ST_LABEL[i.status||"full"]}. Tippen zum Ändern">
       ${state.edit?`<span class="edit" data-edit="${i.id}" aria-hidden="true">✏️</span>`:""}
       <span class="em">${esc(i.emoji)}</span><span class="nm">${esc(i.name)}</span><span class="st">${ST_LABEL[i.status||"full"]}</span></button>`;
-  return `<div class="summary"><span class="pill ok"><span class="dot"></span>${c.full} voll</span><span class="pill low"><span class="dot"></span>${c.low} fast leer</span><span class="pill empty"><span class="dot"></span>${c.empty} leer</span></div>
+  return binsHTML()+`<div class="summary"><span class="pill ok"><span class="dot"></span>${c.full} voll</span><span class="pill low"><span class="dot"></span>${c.low} fast leer</span><span class="pill empty"><span class="dot"></span>${c.empty} leer</span></div>
     <p class="mood">${esc(mood(items))}</p>
     <div class="cats" role="group" aria-label="Kategorie">${cats.map(k=>`<button data-cat="${k}" aria-pressed="${k===state.cat}">${k}</button>`).join("")}<button data-toggle-edit aria-pressed="${state.edit}">${state.edit?"Fertig":"✏️ Bearbeiten"}</button></div>
     ${groups.map(([k,arr])=>`${state.cat==="Alle"?`<div class="section-h">${k}</div>`:""}<div class="grid">${arr.map(tile).join("")}${(state.cat!=="Alle"||k===groups[groups.length-1][0])?`<button class="tile add-tile" id="addNew"><span class="em">＋</span><span class="nm">Neuer Artikel</span></button>`:""}</div>`).join("")}
@@ -849,10 +959,15 @@ function bindView(){
   const mn=$("#manual"); if(mn) mn.onclick=()=>buySheet(null);
   document.querySelectorAll("[data-scan]").forEach(b=>b.onclick=scanReceipt);
   document.querySelectorAll("[data-rcpt]").forEach(b=>b.onclick=()=>receiptSheet(b.dataset.rcpt));
+  document.querySelectorAll("[data-bin]").forEach(b=>b.onclick=()=>toggleBin(b.dataset.bin));
+  document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>awaySheet(null,b.dataset.day));
+  document.querySelectorAll("[data-away]").forEach(b=>b.onclick=()=>awaySheet(b.dataset.away));
+  document.querySelectorAll("[data-cal]").forEach(b=>b.onclick=()=>{ const d=+b.dataset.cal; state.calOff=d?state.calOff+d:0; play("pop"); render(); });
+  const aa=$("#addAway"); if(aa) aa.onclick=()=>awaySheet(null);
   document.querySelectorAll("[data-delp]").forEach(b=>{ let armed=false; b.onclick=async()=>{ if(!armed){armed=true;b.textContent="?";b.setAttribute("aria-label","Nochmal tippen zum Löschen");setTimeout(()=>{armed=false;b.textContent="✕"},2500);return;} play("trash"); await Store.delPurchase(b.dataset.delp); }; });
 }
 
-document.querySelectorAll("nav.tabs [data-tab]").forEach(b=>b.onclick=()=>{ state.tab=b.dataset.tab; state.edit=false; play("pop"); render(); scrollTo(0,0); });
+document.querySelectorAll("nav.tabs [data-tab]").forEach(b=>b.onclick=()=>{ state.tab=b.dataset.tab; state.edit=false; state.calOff=0; play("pop"); render(); scrollTo(0,0); });
 $("#meBtn").onclick=pickMe;
 $("#soundBtn").onclick=()=>{ muted=!muted; ls.set("wg_muted",muted?"1":"0"); render(); if(!muted) play("bell"); };
 setInterval(()=>{ if(state.tab==="liste") render(); },60000);
