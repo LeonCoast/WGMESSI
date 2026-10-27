@@ -32,6 +32,7 @@ function bindView(){
   const sd=$("#seed"); if(sd) sd.onclick=seedStarter;
   document.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buySheet(b.dataset.buy));
   const mn=$("#manual"); if(mn) mn.onclick=()=>buySheet(null);
+  const xp=$("#expense"); if(xp) xp.onclick=expenseSheet;
   document.querySelectorAll("[data-scan]").forEach(b=>b.onclick=scanReceipt);
   document.querySelectorAll("[data-rcpt]").forEach(b=>b.onclick=()=>receiptSheet(b.dataset.rcpt));
   document.querySelectorAll("[data-bin]").forEach(b=>b.onclick=()=>toggleBin(b.dataset.bin));

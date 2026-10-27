@@ -55,7 +55,7 @@ neue Sammlungen brauchen also keine Regeländerung.
 | Sammlung | Inhalt |
 |---|---|
 | `items` | Vorrat: `name, emoji, cat, status (full/low/empty), order, by, at, boughtBy?` |
-| `purchases` | Einkäufe: `item, itemId?, emoji, who, price, at, store?, receiptId?, label?`; Ausgleich: `kind:"settle", who (zahlt), to` |
+| `purchases` | Einkäufe: `item, itemId?, emoji, who, price, at, store?, receiptId?, label?`; Ausgleich: `kind:"settle", who (zahlt), to`; sonstige Ausgabe (Porto, Möbel, Abend …): `kind:"expense"`, ohne `itemId` |
 | `receipts` | Kassenbons: Metadaten + Foto als JPEG-Data-URL (Graustufen, < ~150 KB). Nur bei Bedarf geladen |
 | `chat` | Nachrichten, ID = Zeitstempel + uid, es werden die letzten 300 geladen |
 | `away` | Abwesenheiten: `who, from, to (YYYY-MM-DD), note` |
@@ -64,7 +64,8 @@ neue Sammlungen brauchen also keine Regeländerung.
 | `prefs` | Push-Einstellungen pro Person (Doc-ID = Name) |
 
 Geld-Logik steckt in `money()`: Einkäufe werden gedrittelt, `settle`-Einträge verschieben nur zwischen zwei Personen
-und zählen nicht als Einkauf (Wertung „Wer kauft ein?“). Die Wertung und der Einkaufs-Vorschlag auf Home zählen
+und zählen nicht als Einkauf (Wertung „Wer kauft ein?“). `expense`-Einträge werden gedrittelt, zählen aber ebenfalls
+nicht in der Wertung und nicht beim Einkaufs-Vorschlag (die zählen nur Einträge ohne `kind`). Die Wertung und der Einkaufs-Vorschlag auf Home zählen
 **Artikel, nicht Einkäufe**: Ein Bon mit 5 Zeilen zählt 5×. Das ist so gewollt, nicht „reparieren“. Automatische To-dos (`autoTodos()`) werden nicht gespeichert,
 sondern jedes Mal aus dem Stand berechnet.
 

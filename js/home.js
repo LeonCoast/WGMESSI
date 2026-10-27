@@ -29,7 +29,7 @@ function autoTodos(){
   const need=state.items.filter(i=>i.status!=="full").sort((a,b)=>(a.status==="empty"?0:1)-(b.status==="empty"?0:1));
   if(need.length){
     const mStart=new Date(new Date().getFullYear(),new Date().getMonth(),1).getTime();
-    const cnt=Object.fromEntries(PEOPLE.map(n=>[n,0])); state.purchases.forEach(p=>{ if(p.kind!=="settle"&&p.at>=mStart&&p.who in cnt) cnt[p.who]++; });
+    const cnt=Object.fromEntries(PEOPLE.map(n=>[n,0])); state.purchases.forEach(p=>{ if(!p.kind&&p.at>=mStart&&p.who in cnt) cnt[p.who]++; });
     const here=PEOPLE.filter(p=>!awayOn(p,today)), min=Math.min(...here.map(p=>cnt[p])), low=here.filter(p=>cnt[p]===min);
     const turn=low.length===1&&here.length>1?low[0]:"";
     const names=need.slice(0,3).map(i=>i.name).join(", ")+(need.length>3?` +${need.length-3}`:"");
