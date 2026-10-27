@@ -21,8 +21,9 @@ function mood(items){
 }
 
 let actx=null; let muted = ls.get("wg_muted")==="1";
-/* iOS: Web Audio auch bei Lautlos-Schalter abspielen (Safari 16.4+) */
-try{ if(navigator.audioSession) navigator.audioSession.type="playback"; }catch(e){}
+/* iOS: "ambient" mischt die App-Sounds mit Spotify & Co., statt sie zu pausieren (Safari 16.4+).
+   Dafür bleibt die App beim Lautlos-Schalter stumm. */
+try{ if(navigator.audioSession) navigator.audioSession.type="ambient"; }catch(e){}
 function audio(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){} } if(actx&&actx.state!=="running") actx.resume().catch(()=>{}); return actx; }
 /* Safari entsperrt Audio nicht immer beim ersten Tippen: bei jeder Geste erneut versuchen, bis es läuft */
 function unlockAudio(){ const a=audio(); if(a&&a.state==="running"){ ["pointerdown","touchend","click","keydown"].forEach(ev=>document.removeEventListener(ev,unlockAudio,true)); } }

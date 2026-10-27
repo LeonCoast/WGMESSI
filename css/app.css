@@ -47,6 +47,8 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backgroun
 .cats button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 
 .section-h{font:800 13px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:18px 2px 8px}
+.month-h{display:flex;justify-content:space-between;align-items:baseline;font:700 15px var(--f-body);color:var(--ink);margin:14px 4px 6px}
+.month-h .money{font-size:14px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
 .tile{position:relative;aspect-ratio:1/1;max-width:100%;border-radius:20px;background:var(--surface);box-shadow:var(--shadow);border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;text-align:center;transition:transform .15s}
 .tile .em{font-size:36px;line-height:1}

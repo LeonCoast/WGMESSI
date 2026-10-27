@@ -102,5 +102,7 @@ Offene Aufgaben und Ideen liegen als **GitHub-Issues** in `LeonCoast/WGMESSI` (`
   Fallback mit Binarisierung. Liefert bei echten Fotos einen Entwurf mit Fehlern, darum gibt es immer den Prüf-Dialog
   (mit „Erkannter Text“ zum Debuggen). Bon-Wörter → Vorrat-Artikel über `ALIAS`.
 - iOS: Eingabefelder brauchen ≥ 16 px Schrift, sonst zoomt Safari.
+- iOS-Ton: `navigator.audioSession.type="ambient"` (in `fx.js`), damit Spotify & Co. weiterlaufen. Nicht auf `"playback"`
+  stellen: Das pausiert andere Apps (dafür sind die App-Sounds beim Lautlos-Schalter stumm, so gewollt).
 - GitHub Pages cacht Dateien ca. 10 Minuten. Direkt nach einem Deploy kann ein Gerät kurz eine Mischung aus alter und
   neuer Version laden; im Zweifel App schließen und neu öffnen.
