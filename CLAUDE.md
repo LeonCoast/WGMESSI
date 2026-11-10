@@ -31,6 +31,7 @@ js/geld.js          Ausgaben, Bilanz (money()), Ausgleich
 js/home.js          Home-Reiter, eigene To-dos, automatische To-dos
 js/main.js          render(), bindView(), Tab-Leiste, Passwort-Gate, App-Start — muss als letztes laden
 assets/icons/       App-Icons, assets/kauf.mp3 = Kauf-Sound
+.github/            Tägliche Erinnerung: workflows/erinnerung.yml + scripts/erinnerung.py (GitHub Actions, kein Teil der Seite)
 ```
 
 - Die JS-Dateien sind **klassische Skripte, keine Module**: Alle teilen sich den globalen Scope, top-level `const`/`let`
@@ -74,6 +75,13 @@ sondern jedes Mal aus dem Stand berechnet.
 Über ntfy.sh, ein Thema pro Person (`pushTopic(name)`). `sendPush(ev, title, msg, tags, only?)` respektiert die Prefs
 (`PUSH_EVENTS`) und schickt nie an einen selbst. Status-Meldungen gehen verzögert raus (`notifyLater`, 20 s), damit
 Vertipper nicht pushen.
+
+**Erinnerung um 15 Uhr:** Läuft nicht in der App, sondern per GitHub Actions (`.github/workflows/erinnerung.yml`). Das
+Python-Skript liest Firestore über REST und pusht an alle, solange ein Artikel `empty` oder `bins/papier` `full` ist (seit
+≥ 2 h). Prefs-Schlüssel `erinnerung`, Abwesende (`away`) werden übersprungen. Cron in UTC zweimal (13 + 14 Uhr), das
+Skript wählt per `--slot` den Lauf, der gerade 15 Uhr in Berlin ist. Testen: `python3 .github/scripts/erinnerung.py
+--dry-run`, oder in GitHub unter Actions → Erinnerung → „Run workflow“ (schickt sofort echt). WG-Werte sind im Skript
+doppelt zu `config.js`. GitHub schaltet geplante Läufe nach 60 Tagen ohne Commit im Repo ab.
 
 ## Lokal entwickeln
 
