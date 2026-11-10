@@ -4,7 +4,7 @@
 const PUSH_EVENTS = [
   ["leer","Etwas ist leer","🚨",true], ["fastleer","Etwas ist fast leer","⚠️",false], ["kauf","Jemand hat eingekauft","🎉",true],
   ["muell","Müll ist voll","🗑️",true], ["kalender","Jemand ist nicht da (Kalender)","📅",false], ["chat","Neue Chat-Nachricht","💬",true],
-  ["todo","Neues To-do","✅",true], ["geld","Jemand hat dir Geld zurückgegeben","💸",true], ["erinnerung","Erinnerung um 15 Uhr, solange etwas leer oder der Papiermüll voll ist","🔔",true] ];
+  ["todo","Neues To-do","✅",true], ["geld","Jemand hat dir Geld zurückgegeben","💸",true], ["erinnerung","Erinnerung um 15 Uhr, solange etwas leer oder ein Müll voll ist","🔔",true] ];
 const pushTopic = p => `${NTFY_TOPIC}-${p.toLowerCase()}`;
 const wantsPush = (p,ev) => { const d=PUSH_EVENTS.find(x=>x[0]===ev); return !!d && (state.prefs[p]?.[ev] ?? d[3]); };
 function sendPush(ev,title,message,tags,only){

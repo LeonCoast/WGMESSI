@@ -1,4 +1,4 @@
-# Tägliche Erinnerung um 15 Uhr (Berlin), solange etwas leer oder der Papiermüll voll ist.
+# Tägliche Erinnerung um 15 Uhr (Berlin), solange etwas leer oder ein Müll voll ist.
 # Cron läuft in UTC: 13 Uhr UTC = 15 Uhr Sommerzeit, 14 Uhr UTC = 15 Uhr Winterzeit. Das Skript wählt den passenden Lauf.
 # Von Hand gestartet (workflow_dispatch) wird sofort geschickt.
 name: Erinnerung

@@ -1,4 +1,4 @@
-"""Tägliche Erinnerung um 15 Uhr: Was im Vorrat leer ist oder ob der Papiermüll voll ist.
+"""Tägliche Erinnerung um 15 Uhr: Was im Vorrat leer ist und welcher Müll voll ist.
 Läuft per GitHub Actions (.github/workflows/erinnerung.yml), liest Firestore über REST und pusht über ntfy.
 Werte wie in js/config.js. Aufruf mit --dry-run zeigt nur an, was verschickt würde."""
 import json, sys, time, urllib.request, urllib.parse
@@ -9,6 +9,7 @@ API_KEY = "AIzaSyATpgnMaIGlMhmJVfZSnOWwQENa7yIg21M"
 WG_ID = "wg-df6970f8e70a3ab3"
 NTFY_TOPIC = "wgvorrat-c54d95de25513d322851"
 PEOPLE = ["Leon", "Lucio", "Yannick"]
+BINS = [("rest", "Restmüll"), ("papier", "Papiermüll")]  # Doc-IDs wie in js/muell.js
 BASE = f"https://firestore.googleapis.com/v1/projects/wg-vorrat/databases/(default)/documents/wgs/{WG_ID}/"
 MIN_AGE_MS = 2 * 3600 * 1000  # erst erinnern, wenn es schon mindestens 2 Stunden rot ist
 
@@ -44,13 +45,12 @@ def main():
     ms = int(time.time() * 1000)
     empty = sorted((i for i in coll("items") if i.get("status") == "empty" and ms - i.get("at", 0) >= MIN_AGE_MS), key=lambda i: i.get("order", 0))
     bins = {b["id"]: b for b in coll("bins")}
-    papier = bins.get("papier", {})
-    papier_voll = papier.get("status") == "full" and ms - papier.get("at", 0) >= MIN_AGE_MS
-    if not empty and not papier_voll:
+    voll = [label for key, label in BINS if bins.get(key, {}).get("status") == "full" and ms - bins[key].get("at", 0) >= MIN_AGE_MS]
+    if not empty and not voll:
         print("Alles grün, keine Erinnerung."); return
     lines = []
     if empty: lines.append("Leer: " + ", ".join(f"{i.get('emoji', '')} {i['name']}".strip() for i in empty))
-    if papier_voll: lines.append("🗑️ Papiermüll ist voll")
+    lines += [f"🗑️ {label} ist voll" for label in voll]
     title, msg = "🔔 Immer noch offen", "\n".join(lines)
     prefs = {p["id"]: p for p in coll("prefs")}
     today = now.strftime("%Y-%m-%d")
