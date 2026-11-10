@@ -11,7 +11,7 @@ NTFY_TOPIC = "wgvorrat-c54d95de25513d322851"
 PEOPLE = ["Leon", "Lucio", "Yannick"]
 BINS = [("rest", "Restmüll"), ("papier", "Papiermüll")]  # Doc-IDs wie in js/muell.js
 BASE = f"https://firestore.googleapis.com/v1/projects/wg-vorrat/databases/(default)/documents/wgs/{WG_ID}/"
-MIN_AGE_MS = 2 * 3600 * 1000  # erst erinnern, wenn es schon mindestens 2 Stunden rot ist
+MIN_AGE_MS = 24 * 3600 * 1000  # erst erinnern, wenn es schon mindestens einen Tag rot ist
 
 def val(v):
     t, x = next(iter(v.items()))

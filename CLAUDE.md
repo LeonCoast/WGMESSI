@@ -78,7 +78,7 @@ Vertipper nicht pushen.
 
 **Erinnerung um 15 Uhr:** Läuft nicht in der App, sondern per GitHub Actions (`.github/workflows/erinnerung.yml`). Das
 Python-Skript liest Firestore über REST und pusht an alle, solange ein Artikel `empty` oder `bins/rest` bzw. `bins/papier` `full` ist (seit
-≥ 2 h). Prefs-Schlüssel `erinnerung`, Abwesende (`away`) werden übersprungen. Cron in UTC zweimal (13 + 14 Uhr), das
+≥ 24 h, also frühestens am übernächsten 15-Uhr-Lauf, wenn es nach 15 Uhr rot wurde). Prefs-Schlüssel `erinnerung`, Abwesende (`away`) werden übersprungen. Cron in UTC zweimal (13 + 14 Uhr), das
 Skript wählt per `--slot` den Lauf, der gerade 15 Uhr in Berlin ist. Testen: `python3 .github/scripts/erinnerung.py
 --dry-run`, oder in GitHub unter Actions → Erinnerung → „Run workflow“ (schickt sofort echt). WG-Werte sind im Skript
 doppelt zu `config.js`. GitHub schaltet geplante Läufe nach 60 Tagen ohne Commit im Repo ab.
